@@ -1,0 +1,13 @@
+variables:
+  APP_NAME: "read-csv"
+  MAJOR_VERSION: "0"
+  MINOR_VERSION: "5"
+  MAINTENANCE_VERSION: "1"
+  INSPECTION_ENABLED: 'false'
+  TEST_ENABLED: 'false'
+  ARTIFACTORY_PUBLISH: 'false'
+  
+include:
+  - project: 'vivarium/th2/pipelines'
+    ref: master
+    file: '/.gitlab-ci-java.yml'
