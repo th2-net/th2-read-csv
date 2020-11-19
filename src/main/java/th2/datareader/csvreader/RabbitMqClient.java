@@ -133,12 +133,12 @@ public class RabbitMqClient implements AutoCloseable {
 	
 	public boolean publish(String line) throws IOException {
         int dataSize = line.getBytes().length;
-        if (dataSize > SIZE_LIMIT) {
+        if (dataSize >= SIZE_LIMIT) {
             throw new IllegalArgumentException("The input line can contain only " + SIZE_LIMIT + " bytes but has " + dataSize);
         }
 
         boolean published = false;
-        if (size + dataSize > SIZE_LIMIT) {
+        if (size + dataSize >= SIZE_LIMIT) {
             resetAndPublish();
             published = true;
         }
