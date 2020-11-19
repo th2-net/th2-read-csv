@@ -25,9 +25,11 @@ import com.exactpro.th2.infra.grpc.RawMessageMetadata;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Timestamp;
 
-public class RabbitMqClient {
-	
-	private final Logger logger = LoggerFactory.getLogger(RabbitMqClient.class);
+public class RabbitMqClient implements AutoCloseable {
+
+    private static final int LINES_LIMIT = 100;
+    private static final int SIZE_LIMIT = 100000000;
+    private final Logger logger = LoggerFactory.getLogger(RabbitMqClient.class);
 	
 	private String amqpUri = "amqp://th2:ahw3AeWa@10.64.66.114:5672/th2";
 
@@ -129,29 +131,43 @@ public class RabbitMqClient {
 		System.out.println("Done");
 	}
 	
-	public void publish(String line) throws IOException {
-		
-		size += line.length();
+	public boolean publish(String line) throws IOException {
+        int dataSize = line.getBytes().length;
+        if (dataSize > SIZE_LIMIT) {
+            throw new IllegalArgumentException("The input line can contain only " + SIZE_LIMIT + " bytes but has " + dataSize);
+        }
+
+        boolean published = false;
+        if (size + dataSize > SIZE_LIMIT) {
+            resetAndPublish();
+            published = true;
+        }
+        size += line.length();
 		
 		listOfLines.add(line);
 		
-		if (	(listOfLines.size() > 100) || 
-				(size > 100000000) || 
+		if (	(listOfLines.size() >= LINES_LIMIT) ||
 				(Clock.systemDefaultZone().instant().getEpochSecond() - lastPublishTs > 2)) {
-			
-			lastPublishTs = Clock.systemDefaultZone().instant().getEpochSecond();
-			size = 0;
-			
-			publish();
-		}		
+
+            resetAndPublish();
+            return true;
+        }
+        return published;
 	}
-	
-	
-	public void setSessionAlias(String alias) {
+
+    private void resetAndPublish() throws IOException {
+        lastPublishTs = Clock.systemDefaultZone().instant().getEpochSecond();
+        size = 0;
+
+        publish();
+    }
+
+    public void setSessionAlias(String alias) {
 		sessionAlias = alias;
 	}
 	
-	public void close() throws IOException, TimeoutException {
+	@Override
+    public void close() throws IOException, TimeoutException {
 		
 		if (!listOfLines.isEmpty()) {
 			publish();

@@ -13,13 +13,13 @@ import org.slf4j.LoggerFactory;
 import net.logstash.logback.argument.StructuredArguments;
 
 public class CsvReader implements AutoCloseable {
-	private String fileName;
+	private final String fileName;
 	private Scanner scanner; 
 	private Logger logger = LoggerFactory.getLogger(CsvReader.class);
 	
 	private boolean closeState;
 	
-	public CsvReader() {
+	public CsvReader() throws FileNotFoundException {
 		this.fileName = System.getenv("CSV_FILE_NAME");
 		
 		closeState = false;
@@ -27,7 +27,8 @@ public class CsvReader implements AutoCloseable {
 		try {
 			scanner = new Scanner(new File(fileName));
 		} catch (FileNotFoundException e) {
-			logger.error("{}", e.getMessage(), StructuredArguments.value("stacktrace",e.getStackTrace()), e);			
+			logger.error("{}", e.getMessage(), StructuredArguments.value("stacktrace",e.getStackTrace()), e);
+            throw e;
 		}
 		
 		logger.info("Open csv file", StructuredArguments.value("fileName",fileName));
