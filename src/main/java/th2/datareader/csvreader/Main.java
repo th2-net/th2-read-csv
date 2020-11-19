@@ -71,7 +71,7 @@ public class Main extends Object  {
                 }
             }
 		} catch (Exception e) {
-			logger.error("{}", e);
+			logger.error("Cannot read file", e);
 			System.exit(2);
 		}
 	}

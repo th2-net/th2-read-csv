@@ -101,7 +101,7 @@ public class RabbitMqClient implements AutoCloseable {
 		
 		channel.basicPublish(exchangeName, queueName, null, data);
 		
-		logger.trace("publish",
+		logger.trace("publish {}, {}, {}",
 				StructuredArguments.value("exchangeName",exchangeName),
 				StructuredArguments.value("queueName",queueName),
 				StructuredArguments.value("data",data)
@@ -110,7 +110,7 @@ public class RabbitMqClient implements AutoCloseable {
 	
 	public void connect() throws Exception {
 		
-		logger.info("Connecting to RabbitMQ", 
+		logger.info("Connecting to RabbitMQ {}",
 				StructuredArguments.value("URI",amqpUri)
 				);
 		
@@ -128,7 +128,7 @@ public class RabbitMqClient implements AutoCloseable {
 		
 		channel.queueBind("", exchangeName, queueName);
 					
-		System.out.println("Done");
+		logger.info("Done");
 	}
 	
 	public boolean publish(String line) throws IOException {
@@ -176,6 +176,6 @@ public class RabbitMqClient implements AutoCloseable {
 		channel.close();
 		conn.close();
 		
-		logger.info("Disconecting from RabbitMQ");
+		logger.info("Disconnecting from RabbitMQ");
 	}
 }
