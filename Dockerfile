@@ -1,13 +1,16 @@
-FROM openjdk:12-alpine
+FROM gradle:6.6-jdk11 AS build
+ARG release_version
+COPY ./ .
+RUN gradle clean build dockerPrepare -Prelease_version=${release_version}
 
+FROM openjdk:11-jre-slim
 ENV RABBITMQ_HOST=host \
     RABBITMQ_PORT=port \
     RABBITMQ_VHOST=vhost \
     RABBITMQ_USER=user \
     RABBITMQ_PASS=password \
     RABBITMQ_EXCHANGE_NAME_TH2_CONNECTIVITY=demo_exchange \
-    CSV_FILE_NAME=filename
-
+    CSV_FILE_NAME=filename 
 WORKDIR /home
-COPY ./ .
-ENTRYPOINT ["/home/th2-csv-reader/bin/th2-csv-reader"]
+COPY --from=build /home/gradle/build/docker .
+ENTRYPOINT ["/home/service/bin/service"]

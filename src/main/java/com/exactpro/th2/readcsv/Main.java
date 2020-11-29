@@ -1,5 +1,22 @@
-package th2.datareader.csvreader;
+/*
+ * Copyright 2020-2020 Exactpro (Exactpro Systems Limited)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
+package com.exactpro.th2.readcsv;
+
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
@@ -7,6 +24,10 @@ import java.util.Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.logstash.logback.argument.StructuredArguments;
+
+import com.exactpro.th2.common.metrics.CommonMetrics;
+import com.exactpro.th2.common.schema.factory.CommonFactory;
+import com.exactpro.th2.readcsv.cfg.ReaderConfig;
 
 public class Main extends Object  {
 	
@@ -17,6 +38,12 @@ public class Main extends Object  {
 	
 	public static void main(String[] args) {
 		
+        CommonMetrics.setLiveness(true);
+        
+        CommonFactory commonFactory = CommonFactory.createFromArguments(args);
+        
+        ReaderConfig configuration = commonFactory.getCustomConfiguration(ReaderConfig.class);
+        
 		try {		
    			
 		    Properties props = new Properties();
@@ -33,19 +60,26 @@ public class Main extends Object  {
             long lastResetTime = System.currentTimeMillis();
             int batchesPublished = 0;
             boolean limited = maxBatchesPerSecond != NO_LIMIT;
+            
             if (limited) {
                 logger.info("Publication is limited to {} batch(es) per second", maxBatchesPerSecond);
             } else {
                 logger.info("Publication is unlimited");
             }
 
-            try (RabbitMqClient client = new RabbitMqClient()) {
-
-                client.connect();
-
-                try (CsvReader reader = new CsvReader()) {
-
-                    client.setSessionAlias(reader.getFileName());
+            File csvFile = configuration.getCsvFile();
+            String csvHeader = configuration.getCsvHeader();
+                        
+            try (PiblisherClient client = new PiblisherClient(csvFile.getName(), commonFactory.getMessageRouterRawBatch())) {
+            	            	            	
+                try (CsvReader reader = new CsvReader(csvFile)) {
+                	
+                	if (csvHeader.isEmpty()) {
+                		csvHeader = reader.getHeader(); 
+                		logger.info("csvHeader",StructuredArguments.value("csvHeader", csvHeader));
+                	}
+                	
+            		CommonMetrics.setReadiness(true);
 
                     while (reader.hasNextLine()) {
                         if (limited) {
@@ -72,8 +106,10 @@ public class Main extends Object  {
             }
 		} catch (Exception e) {
 			logger.error("Cannot read file", e);
-			System.exit(2);
 		}
+		
+        CommonMetrics.setReadiness(false);
+        CommonMetrics.setLiveness(false);
 	}
 
     private static int getMaxBatchesPerSecond() {

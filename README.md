@@ -1,39 +1,51 @@
-# th2-csvreader
+# Csv Reader User Manual 1.00
 
-th2-csvreader
+## Document Information
 
-## Configuration
+### Table of contents
 
-**RABBITMQ_EXCHANGE_NAME_TH2_CONNECTIVITY** - defines exchange name
+{table_contents}
 
-RABBITMQ_EXCHANGE_NAME_TH2_CONNECTIVITY=demo_exchange (default value)
+### Introduction
 
-**RABBITMQ_HOST** - rabbitmq host
+Csv reader read csv files, results are sending to RabbitMQ.
+Csv reader produces **raw messages**. See **RawMessage** type in infra.proto.
 
-RABBITMQ_HOST=10.0.0.12 
+### Quick start
 
-**RABBITMQ_PORT** - rabbitmq port
+#### Configuration
 
-RABBITMQ_PORT=5672
+##### Reader configuration
 
-**RABBITMQ_VHOST** - rabbitmq vhost
+Example:
+```json
+{
+  "csv-file": "path/to/file.csv",
+  "csv-header": "price,side,qty,orderid,clientid",
+  "max-batches-per-second": 1000
+}
+```
 
-RABBITMQ_VHOST=vhost
+**csv-file** - specifying path where log file is located
 
-**RABBITMQ_USER** - rabbitmq user
+**max-batches-per-second** - the maximum number of batches publications per second. The default value is **-1** that means not limit.
 
-RABBITMQ_USER=user
+**csv-header** - specifying the header of the csv file. If the value is empty than first line of the csv file interprets as header.
 
-**RABBITMQ_PASS** - rabbitmq user password
 
-RABBITMQ_PASS=password
+##### Pin declaration
 
-**RABBITMQ_QUEUE_POSTFIX** - specifying postfix for generated queue names
+The log reader requires a single pin with _publish_ and _raw_ attributes. The data is published in a raw format. To use it please conect the output pin with another pin that transforms raw data to parsed data. E.g. the **codec** box.
 
-RABBITMQ_QUEUE_POSTFIX = prod.  This will produces one queue: csvreader.first.prod
-
-If not specified  -  will produce one queues: csvreader.first.default
-
-**CSV_FILE_NAME** - the name of the file in CSV format to read data from.
-
-**BATCH_PER_SECOND_LIMIT** - the max number of batches to publish per second. The default value is **-1** that means no limit.
+Example:
+```yaml
+apiVersion: th2.exactpro.com/v1
+kind: Th2GenericBox
+metadata:
+  name: csv-reader
+spec:
+  pins:
+    - name: out_log
+      connection-type: mq
+      attributes: ['raw', 'publish', 'store']
+```
