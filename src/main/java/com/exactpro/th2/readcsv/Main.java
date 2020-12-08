@@ -77,6 +77,7 @@ public class Main extends Object  {
                 	if (csvHeader.isEmpty()) {
                 		csvHeader = reader.getHeader(); 
                 		logger.info("csvHeader",StructuredArguments.value("csvHeader", csvHeader));
+                		client.setCsvHeader(csvHeader);
                 	}
                 	
             		CommonMetrics.setReadiness(true);

@@ -115,7 +115,7 @@ public class PiblisherClient implements AutoCloseable {
 		ts.setNanos(instant.getNano());
 		
 		if (isHeader) {
-			metaData.putProperties("message.type", header);
+			metaData.putProperties("message.type", "header");
 		}
 		
 		metaData.setTimestamp(ts);
