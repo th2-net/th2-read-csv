@@ -29,6 +29,7 @@ import com.exactpro.th2.common.metrics.CommonMetrics;
 import com.exactpro.th2.common.schema.factory.CommonFactory;
 import com.exactpro.th2.readcsv.cfg.ReaderConfig;
 
+
 public class Main extends Object  {
 	
 	private final static Logger logger = LoggerFactory.getLogger(Main.class);
@@ -77,6 +78,7 @@ public class Main extends Object  {
                 	if (csvHeader.isEmpty()) {
                 		csvHeader = reader.getHeader(); 
                 		logger.info("csvHeader",StructuredArguments.value("csvHeader", csvHeader));
+                		client.setCsvHeader(csvHeader);
                 	}
                 	
             		CommonMetrics.setReadiness(true);
