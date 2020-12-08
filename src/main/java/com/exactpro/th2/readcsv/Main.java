@@ -29,6 +29,7 @@ import com.exactpro.th2.common.metrics.CommonMetrics;
 import com.exactpro.th2.common.schema.factory.CommonFactory;
 import com.exactpro.th2.readcsv.cfg.ReaderConfig;
 
+
 public class Main extends Object  {
 	
 	private final static Logger logger = LoggerFactory.getLogger(Main.class);

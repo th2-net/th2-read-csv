@@ -54,7 +54,7 @@ public class PiblisherClient implements AutoCloseable {
 	private long lastPublishTs = Clock.systemDefaultZone().instant().getEpochSecond();
     private final MessageRouter<RawMessageBatch> batchMessageRouter;
 
-    private String header = "";
+    private String header =  "";
     
     public PiblisherClient(String sessionAlias, MessageRouter<RawMessageBatch> batchMessageRouter) {
         this(sessionAlias, batchMessageRouter, LINES_LIMIT, SIZE_LIMIT);
