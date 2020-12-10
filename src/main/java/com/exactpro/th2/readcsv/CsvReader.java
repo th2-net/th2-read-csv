@@ -15,14 +15,10 @@
  */
 package com.exactpro.th2.readcsv;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Objects;
-import java.util.Properties;
 import java.util.Scanner;
 
 import org.slf4j.Logger;
@@ -35,13 +31,9 @@ public class CsvReader implements AutoCloseable {
 	private Scanner scanner; 
 	private Logger logger = LoggerFactory.getLogger(CsvReader.class);
 	
-	private boolean closeState;
-	
 	public CsvReader(File fileName) throws FileNotFoundException {
 		this.fileName = Objects.requireNonNull(fileName, "'Csv file name' parameter");
-		 		
-		closeState = false;
-		
+		 				
 		try {
 			scanner = new Scanner(fileName);
 		} catch (FileNotFoundException e) {
@@ -64,33 +56,20 @@ public class CsvReader implements AutoCloseable {
 		
 		String header= "";
 		
-		try (BufferedReader brCsv = new BufferedReader(new FileReader(fileName))) {
-			while ((header=brCsv.readLine())!=null) {
-				
-				//ommit empty lines
-				if(!header.equals("")) {
-			        break;
-			    }
+		while (scanner.hasNextLine()) {
+			header = scanner.nextLine();
+			if (!header.isBlank()) {
+				break;
 			}
-									
-		} catch (IOException e) {
-			logger.error(e.getMessage(), e);
-			throw e;
 		}
-
 		
 		return header;
-	}
-	
-	public boolean isClosed() {
-		return closeState;
 	}
 	
 	@Override
 	public void close() {
 		if (scanner != null) {
 			scanner.close();
-			closeState=true;
 		}
 		logger.info("Close csv file {}", StructuredArguments.value("fileName",fileName));
 	}

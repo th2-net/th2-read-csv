@@ -136,6 +136,11 @@ public class PiblisherClient implements AutoCloseable {
 	}
 	
 	public boolean publish(String line) throws IOException {
+		
+		if (line.isBlank()) {
+			return false;
+		}
+		
         int dataSize = line.getBytes().length;
         if (dataSize >= SIZE_LIMIT) {
             throw new IllegalArgumentException("The input line can contain only " + SIZE_LIMIT + " bytes but has " + dataSize);
