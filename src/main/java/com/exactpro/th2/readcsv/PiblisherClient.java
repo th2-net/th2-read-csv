@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.slf4j.Logger;
@@ -48,14 +49,19 @@ public class PiblisherClient implements AutoCloseable {
     private final Logger logger = LoggerFactory.getLogger(PiblisherClient.class);
 
 	private String sessionAlias = "";
-	private long index = 0;
+	private long index = firstSequence();
 	private List<String> listOfLines = new ArrayList<String>();
 	private long size = 0;
 	private long lastPublishTs = Clock.systemDefaultZone().instant().getEpochSecond();
     private final MessageRouter<RawMessageBatch> batchMessageRouter;
 
     private String header =  "";
-    
+
+    private static long firstSequence() {
+        Instant now = Instant.now();
+        return TimeUnit.SECONDS.toNanos(now.getEpochSecond()) + now.getNano();
+    }
+
     public PiblisherClient(String sessionAlias, MessageRouter<RawMessageBatch> batchMessageRouter) {
         this(sessionAlias, batchMessageRouter, LINES_LIMIT, SIZE_LIMIT);
     }
@@ -69,6 +75,7 @@ public class PiblisherClient implements AutoCloseable {
     public void setCsvHeader(String csvHeader) {
         this.header = Objects.requireNonNull(csvHeader, "'CsvHeader' parameter");
     }
+    
 	private void publish() throws IOException {
 		RawMessageBatch.Builder builder = RawMessageBatch.newBuilder();
 		
