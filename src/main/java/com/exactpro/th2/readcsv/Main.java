@@ -75,12 +75,12 @@ public class Main extends Object  {
             	            	            	
                 try (CsvReader reader = new CsvReader(csvFile)) {
                 	
-                	if (csvHeader.isEmpty()) {
+                	if (csvHeader.isBlank()) {
                 		csvHeader = reader.getHeader(); 
                 		logger.info("csvHeader",StructuredArguments.value("csvHeader", csvHeader));
-                		client.setCsvHeader(csvHeader);
                 	}
                 	
+            		client.setCsvHeader(csvHeader);                	
             		CommonMetrics.setReadiness(true);
 
                     while (reader.hasNextLine()) {
