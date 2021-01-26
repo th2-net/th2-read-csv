@@ -1,6 +1,5 @@
 target
 .gradle
-.github
 .idea
 bin
 build
