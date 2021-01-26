@@ -1,2 +1,6 @@
-/target/
-/.gradle/
+target
+.gradle
+.github
+.idea
+bin
+build
