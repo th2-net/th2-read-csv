@@ -71,7 +71,7 @@ public class Main extends Object  {
             File csvFile = configuration.getCsvFile();
             String csvHeader = configuration.getCsvHeader();
                         
-            try (PiblisherClient client = new PiblisherClient(csvFile.getName(), commonFactory.getMessageRouterRawBatch())) {
+            try (PublisherClient client = new PublisherClient(csvFile.getName(), commonFactory.getMessageRouterRawBatch())) {
             	            	            	
                 try (CsvReader reader = new CsvReader(csvFile)) {
                 	

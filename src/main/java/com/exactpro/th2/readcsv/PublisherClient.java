@@ -42,11 +42,11 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.Timestamp;
 import com.google.protobuf.util.JsonFormat;
 
-public class PiblisherClient implements AutoCloseable {
+public class PublisherClient implements AutoCloseable {
 
     private static final int LINES_LIMIT = 100;
     private static final int SIZE_LIMIT = 100000000;
-    private final Logger logger = LoggerFactory.getLogger(PiblisherClient.class);
+    private final Logger logger = LoggerFactory.getLogger(PublisherClient.class);
 
 	private String sessionAlias = "";
 	private long index = firstSequence();
@@ -62,11 +62,11 @@ public class PiblisherClient implements AutoCloseable {
         return TimeUnit.SECONDS.toNanos(now.getEpochSecond()) + now.getNano();
     }
 
-    public PiblisherClient(String sessionAlias, MessageRouter<RawMessageBatch> batchMessageRouter) {
+    public PublisherClient(String sessionAlias, MessageRouter<RawMessageBatch> batchMessageRouter) {
         this(sessionAlias, batchMessageRouter, LINES_LIMIT, SIZE_LIMIT);
     }
     
-    public PiblisherClient(String sessionAlias, MessageRouter<RawMessageBatch> batchMessageRouter, int linesLimit, int charactersLimit) {
+    public PublisherClient(String sessionAlias, MessageRouter<RawMessageBatch> batchMessageRouter, int linesLimit, int charactersLimit) {
         this.sessionAlias = Objects.requireNonNull(sessionAlias, "'Session alias' parameter");
 
         this.batchMessageRouter = Objects.requireNonNull(batchMessageRouter, "'Batch message router' parameter");        
