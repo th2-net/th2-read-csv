@@ -24,8 +24,6 @@ import java.util.Scanner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import net.logstash.logback.argument.StructuredArguments;
-
 public class CsvReader implements AutoCloseable {
 	private final File fileName;
 	private Scanner scanner; 
@@ -41,7 +39,7 @@ public class CsvReader implements AutoCloseable {
             throw e;
 		}
 		
-		logger.info("Open csv file {}", StructuredArguments.value("fileName",fileName.getAbsolutePath()));
+		logger.info("Open csv file {}", fileName.getAbsolutePath());
 	}
 
 	public boolean hasNextLine() {
@@ -71,6 +69,6 @@ public class CsvReader implements AutoCloseable {
 		if (scanner != null) {
 			scanner.close();
 		}
-		logger.info("Close csv file {}", StructuredArguments.value("fileName",fileName));
+		logger.info("Close csv file {}", fileName);
 	}
 }

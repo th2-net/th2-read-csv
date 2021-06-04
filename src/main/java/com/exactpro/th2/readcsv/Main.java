@@ -21,13 +21,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import net.logstash.logback.argument.StructuredArguments;
-
 import com.exactpro.th2.common.metrics.CommonMetrics;
 import com.exactpro.th2.common.schema.factory.CommonFactory;
 import com.exactpro.th2.readcsv.cfg.ReaderConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 public class Main extends Object  {
@@ -77,7 +75,7 @@ public class Main extends Object  {
                 	
                 	if (csvHeader.isBlank()) {
                 		csvHeader = reader.getHeader(); 
-                		logger.info("csvHeader",StructuredArguments.value("csvHeader", csvHeader));
+                		logger.info("csvHeader: {}", csvHeader);
                 	}
                 	
             		client.setCsvHeader(csvHeader);                	
@@ -99,7 +97,7 @@ public class Main extends Object  {
                             }
                         }
                         String line = reader.getNextLine();
-                        logger.trace("csvLine", StructuredArguments.value("csvLine", line));
+                        logger.trace("csvLine {}", line);
                         if (client.publish(line)) {
                             batchesPublished++;
                         }

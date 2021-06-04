@@ -20,20 +20,14 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.exactpro.th2.common.grpc.ConnectionID;
 import com.exactpro.th2.common.grpc.Direction;
 import com.exactpro.th2.common.grpc.MessageID;
 import com.exactpro.th2.common.grpc.RawMessage;
-
-import net.logstash.logback.argument.StructuredArguments;
 import com.exactpro.th2.common.grpc.RawMessageBatch;
 import com.exactpro.th2.common.grpc.RawMessageMetadata;
 import com.exactpro.th2.common.schema.message.MessageRouter;
@@ -41,6 +35,8 @@ import com.exactpro.th2.common.schema.message.QueueAttribute;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Timestamp;
 import com.google.protobuf.util.JsonFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PublisherClient implements AutoCloseable {
 
