@@ -55,9 +55,6 @@ import com.exactpro.th2.read.file.common.state.impl.InMemoryReaderState;
 import com.exactpro.th2.readcsv.cfg.ReaderConfig;
 import com.exactpro.th2.readcsv.impl.CsvContentParser;
 import com.exactpro.th2.readcsv.impl.HeaderHolder;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.fasterxml.jackson.module.kotlin.KotlinModule;
 import com.google.protobuf.ByteString;
 import kotlin.Unit;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -71,9 +68,6 @@ import static java.util.Comparator.comparing;
 public class Main {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
-    private static final ObjectMapper MAPPER = new ObjectMapper()
-            .registerModule(new KotlinModule())
-            .registerModule(new JavaTimeModule());
 
     public static void main(String[] args) {
         Deque<AutoCloseable> toDispose = new ArrayDeque<>();
@@ -89,7 +83,7 @@ public class Main {
             MessageRouter<RawMessageBatch> rawMessageBatchRouter = commonFactory.getMessageRouterRawBatch();
             MessageRouter<EventBatch> eventBatchRouter = commonFactory.getEventBatchRouter();
 
-            ReaderConfig configuration = commonFactory.getCustomConfiguration(ReaderConfig.class, MAPPER);
+            ReaderConfig configuration = commonFactory.getCustomConfiguration(ReaderConfig.class, ReaderConfig.MAPPER);
             if (configuration.getPullingInterval().isNegative()) {
                 throw new IllegalArgumentException("Pulling interval " + configuration.getPullingInterval() + " must not be negative");
             }

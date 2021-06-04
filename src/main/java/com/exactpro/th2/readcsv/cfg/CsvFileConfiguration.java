@@ -23,6 +23,7 @@ import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.opencsv.ICSVParser;
 
 public class CsvFileConfiguration {
     private final Pattern nameRegexp;
@@ -33,19 +34,22 @@ public class CsvFileConfiguration {
     @JsonCreator
     public CsvFileConfiguration(
             @JsonProperty(value = "nameRegexp", required = true) String regexp,
-            @JsonProperty(value = "delimiter", defaultValue = ",") String delimiter
+            @JsonProperty(value = "delimiter") String delimiter
     ) {
         Objects.requireNonNull(regexp, "'nameRegexp' parameter");
-        Objects.requireNonNull(delimiter, "'delimiter' parameter");
         if (regexp.isEmpty()) {
             throw new IllegalArgumentException("regexp for file name must not be empty");
         }
         nameRegexp = Pattern.compile(regexp);
 
-        if (delimiter.length() != 1) {
-            throw new IllegalArgumentException("The delimiter for CSV should be a single character but got '" + delimiter + "'");
+        if (delimiter != null) {
+            if (delimiter.length() != 1) {
+                throw new IllegalArgumentException("The delimiter for CSV should be a single character but got '" + delimiter + "'");
+            }
+            this.delimiter = delimiter.charAt(0);
+        } else {
+            this.delimiter = ICSVParser.DEFAULT_SEPARATOR;
         }
-        this.delimiter = delimiter.charAt(0);
     }
 
     public Pattern getNameRegexp() {
