@@ -45,6 +45,13 @@ public class ReaderConfig {
     @JsonPropertyDescription("Mapping between aliases and files parameters to read")
     private Map<String, CsvFileConfiguration> aliases = Collections.emptyMap();
 
+    @JsonPropertyDescription("Checks that the number of columns for read records matches the header size")
+    private boolean validateContent = true;
+
+    @JsonPropertyDescription("Disables reporting of errors when the content size is less than the header size. "
+            + "Works only if validateContent is enabled")
+    private boolean validateOnlyExtraData = false;
+
     public Path getSourceDirectory() {
         return sourceDirectory;
     }
@@ -75,6 +82,22 @@ public class ReaderConfig {
 
     public void setAliases(Map<String, CsvFileConfiguration> aliases) {
         this.aliases = aliases;
+    }
+
+    public boolean isValidateContent() {
+        return validateContent;
+    }
+
+    public void setValidateContent(boolean validateContent) {
+        this.validateContent = validateContent;
+    }
+
+    public boolean isValidateOnlyExtraData() {
+        return validateOnlyExtraData;
+    }
+
+    public void setValidateOnlyExtraData(boolean validateOnlyExtraData) {
+        this.validateOnlyExtraData = validateOnlyExtraData;
     }
 }
 

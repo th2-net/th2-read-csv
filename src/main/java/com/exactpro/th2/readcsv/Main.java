@@ -55,6 +55,7 @@ import com.exactpro.th2.read.file.common.state.impl.InMemoryReaderState;
 import com.exactpro.th2.readcsv.cfg.ReaderConfig;
 import com.exactpro.th2.readcsv.impl.CsvContentParser;
 import com.exactpro.th2.readcsv.impl.HeaderHolder;
+import com.exactpro.th2.readcsv.impl.HeaderInfo;
 import com.google.protobuf.ByteString;
 import kotlin.Unit;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -118,7 +119,7 @@ public class Main {
                     .readFileImmediately()
                     .acceptNewerFiles()
                     .onSourceFound((streamId, path) -> clearHeader(headerHolder, streamId))
-                    .onContentRead((streamId, path, builders) -> attachHeaderOrHold(headerHolder, streamId, builders))
+                    .onContentRead((streamId, path, builders) -> attachHeaderOrHold(headerHolder, streamId, builders, configuration))
                     .onStreamData((streamId, builders) -> publishMessages(rawMessageBatchRouter, streamId, builders))
                     .onError((streamId, message, ex) -> publishErrorEvent(eventBatchRouter, streamId, message, ex, rootId))
                     .onSourceCorrupted((streamId, path, e) -> publishSourceCorruptedEvent(eventBatchRouter, path, streamId, e, rootId))
@@ -147,27 +148,45 @@ public class Main {
     }
 
     @NotNull
-    private static Collection<RawMessage.Builder> attachHeaderOrHold(HeaderHolder headerHolder, StreamId streamId, Collection<RawMessage.Builder> builders) {
+    private static Collection<RawMessage.Builder> attachHeaderOrHold(
+            HeaderHolder headerHolder,
+            StreamId streamId,
+            Collection<RawMessage.Builder> builders,
+            ReaderConfig cfg
+    ) {
         String sessionAlias = streamId.getSessionAlias();
-        ByteString headerForAlias = headerHolder.getHeaderForAlias(sessionAlias);
+        HeaderInfo headerForAlias = headerHolder.getHeaderForAlias(sessionAlias);
         if (headerForAlias == null) {
             ByteString extractedHeader = builders.stream()
                     .findFirst()
                     .map(RawMessage.Builder::getBody)
                     .orElseThrow(() -> new IllegalStateException("At leas one message must be in the list"));
-            headerHolder.setHeaderForAlias(sessionAlias, extractedHeader);
+            HeaderInfo extractedHeaderInfo = headerHolder.setHeaderForAlias(sessionAlias, extractedHeader);
             if (builders.size() == 1) {
                 return Collections.emptyList();
             } else {
                 return builders.stream()
                         .skip(1)
-                        .map(it -> it.setBody(extractedHeader.concat(it.getBody())))
+                        .map(it -> validateAndAppend(headerHolder, extractedHeaderInfo, it, cfg.isValidateContent(), cfg.isValidateOnlyExtraData()))
                         .collect(Collectors.toList());
             }
         } else {
-            builders.forEach(it -> it.setBody(headerForAlias.concat(it.getBody())));
+            builders.forEach(it -> validateAndAppend(headerHolder, headerForAlias, it, cfg.isValidateContent(), cfg.isValidateOnlyExtraData()));
             return builders;
         }
+    }
+
+    private static RawMessage.Builder validateAndAppend(
+            HeaderHolder headerHolder,
+            HeaderInfo extractedHeader,
+            RawMessage.Builder it,
+            boolean validate,
+            boolean validateOnlyExtraData
+    ) {
+        if (validate) {
+            headerHolder.validateContentSize(extractedHeader, it.getBody(), validateOnlyExtraData);
+        }
+        return it.setBody(extractedHeader.getContent().concat(it.getBody()));
     }
 
     @NotNull
