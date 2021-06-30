@@ -16,47 +16,88 @@
 
 package com.exactpro.th2.readcsv.cfg;
 
-import java.io.File;
+import java.nio.file.Path;
+import java.time.Duration;
+import java.util.Collections;
+import java.util.Map;
 
+import com.exactpro.th2.read.file.common.cfg.CommonFileReaderConfiguration;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.fasterxml.jackson.module.kotlin.KotlinModule;
 
 public class ReaderConfig {
-    public static final int NO_LIMIT = -1;
 
-    @JsonProperty(value = "csv-file", required = true)
-    private File csvFile;
-    
-    @JsonProperty(value = "csv-header", required = true)
-    private String csvHeader;
+    public static final ObjectMapper MAPPER = new ObjectMapper()
+            .registerModule(new KotlinModule())
+            .registerModule(new JavaTimeModule());
 
-    
-    @JsonProperty("max-batches-per-second")
-    private int maxBatchesPerSecond = NO_LIMIT;
+    @JsonProperty(required = true)
+    private Path sourceDirectory;
 
-    public File getCsvFile() {
-        return csvFile;
+    private CommonFileReaderConfiguration common = new CommonFileReaderConfiguration();
+
+    @JsonPropertyDescription("The interval between checking for new updates if the reader did not find any updates in the previous attempt")
+    private Duration pullingInterval = Duration.ofSeconds(5);
+
+    @JsonPropertyDescription("Mapping between aliases and files parameters to read")
+    private Map<String, CsvFileConfiguration> aliases = Collections.emptyMap();
+
+    @JsonPropertyDescription("Checks that the number of columns for read records matches the header size")
+    private boolean validateContent = true;
+
+    @JsonPropertyDescription("Disables reporting of errors when the content size is less than the header size. "
+            + "Works only if validateContent is enabled")
+    private boolean validateOnlyExtraData = false;
+
+    public Path getSourceDirectory() {
+        return sourceDirectory;
     }
 
-    public void setCsvFile(File logFile) {
-        this.csvFile = logFile;
+    public void setSourceDirectory(Path sourceDirectory) {
+        this.sourceDirectory = sourceDirectory;
     }
 
-    public String getCsvHeader() {
-        return csvHeader;
+    public CommonFileReaderConfiguration getCommon() {
+        return common;
     }
 
-    public void setCsvHeader(String csvHeader) {
-        this.csvHeader = csvHeader;
-    }
-    
-    public int getMaxBatchesPerSecond() {
-        return maxBatchesPerSecond;
+    public void setCommon(CommonFileReaderConfiguration common) {
+        this.common = common;
     }
 
-    public void setMaxBatchesPerSecond(int maxBatchesPerSecond) {
-        this.maxBatchesPerSecond = maxBatchesPerSecond;
+    public Duration getPullingInterval() {
+        return pullingInterval;
     }
 
+    public void setPullingInterval(Duration pullingInterval) {
+        this.pullingInterval = pullingInterval;
+    }
 
+    public Map<String, CsvFileConfiguration> getAliases() {
+        return aliases;
+    }
+
+    public void setAliases(Map<String, CsvFileConfiguration> aliases) {
+        this.aliases = aliases;
+    }
+
+    public boolean isValidateContent() {
+        return validateContent;
+    }
+
+    public void setValidateContent(boolean validateContent) {
+        this.validateContent = validateContent;
+    }
+
+    public boolean isValidateOnlyExtraData() {
+        return validateOnlyExtraData;
+    }
+
+    public void setValidateOnlyExtraData(boolean validateOnlyExtraData) {
+        this.validateOnlyExtraData = validateOnlyExtraData;
+    }
 }
 
