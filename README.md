@@ -1,4 +1,4 @@
-# Csv Reader User Manual 1.0.0
+# Csv Reader User Manual 1.0.1
 
 ## Document Information
 
@@ -85,6 +85,10 @@ spec:
   Works only with `validateContent` set to `true`. The default value is `false`
 
 ## Changes
+
+### 1.0.1
+
++ Fix problem with incorrect sequences
 
 ### 1.0.0
 
