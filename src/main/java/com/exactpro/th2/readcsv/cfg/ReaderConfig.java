@@ -57,6 +57,7 @@ public class ReaderConfig {
     }
 
     public void setSourceDirectory(Path sourceDirectory) {
+        sourceDirectory = Path.of(sourceDirectory.toString().replace("${user.home}", System.getProperty("user.home")));
         this.sourceDirectory = sourceDirectory;
     }
 
