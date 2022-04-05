@@ -86,6 +86,10 @@ spec:
 
 ## Changes
 
+### 1.1.0
+
++ Feature: Status for first and last messages
+
 ### 1.0.1
 
 + Fix problem with incorrect sequences
