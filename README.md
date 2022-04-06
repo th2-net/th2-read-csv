@@ -67,7 +67,7 @@ spec:
         memory: 100Mi
         cpu: 50m
 ```
-
+ 
 + logDirectory - the directory to watch CSV files
 + aliases - the mapping between alias and files parameters that correspond to that alias. 
     + nameRegexp - regular expressions that is to match the file to read. **The files that matches the alias by the regexp will be read one by one**;
