@@ -170,9 +170,7 @@ public class Main {
                         .map(it -> validateAndAppend(headerHolder, extractedHeaderInfo, it, cfg.isValidateContent(), cfg.isValidateOnlyExtraData()))
                         .collect(Collectors.toList());
                 RawMessageMetadata.Builder firstMetadata = builders.stream().findFirst().orElseThrow().getMetadataBuilder();
-                if (firstMetadata.getPropertiesMap().containsKey(AbstractFileReader.MESSAGE_STATUS_PROPERTY)) {
-                    result.get(0).getMetadataBuilder().putProperties(AbstractFileReader.MESSAGE_STATUS_PROPERTY, firstMetadata.getPropertiesMap().get(AbstractFileReader.MESSAGE_STATUS_PROPERTY));
-                }
+                result.get(0).getMetadataBuilder().putAllProperties(firstMetadata.getPropertiesMap());
 
                 return result;
             }
