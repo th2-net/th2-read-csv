@@ -41,7 +41,6 @@ import com.exactpro.th2.common.grpc.EventBatch;
 import com.exactpro.th2.common.grpc.EventID;
 import com.exactpro.th2.common.grpc.RawMessage;
 import com.exactpro.th2.common.grpc.RawMessageBatch;
-import com.exactpro.th2.common.grpc.RawMessageMetadata;
 import com.exactpro.th2.common.message.MessageUtils;
 import com.exactpro.th2.common.metrics.CommonMetrics;
 import com.exactpro.th2.common.schema.factory.CommonFactory;
@@ -167,14 +166,10 @@ public class Main {
             if (builders.size() < 2) {
                 return Collections.emptyList();
             } else {
-                List<RawMessage.Builder> result = builders.stream()
+                return builders.stream()
                         .skip(1)
                         .map(it -> validateAndAppend(headerHolder, extractedHeaderInfo, it, cfg.isValidateContent(), cfg.isValidateOnlyExtraData()))
                         .collect(Collectors.toList());
-                RawMessageMetadata.Builder firstMetadata = builders.stream().findFirst().orElseThrow().getMetadataBuilder();
-                result.get(0).getMetadataBuilder().putAllProperties(firstMetadata.getPropertiesMap());
-
-                return result;
             }
         } else {
             builders.forEach(it -> validateAndAppend(headerHolder, headerForAlias, it, cfg.isValidateContent(), cfg.isValidateOnlyExtraData()));
