@@ -41,6 +41,7 @@ import com.exactpro.th2.common.grpc.EventBatch;
 import com.exactpro.th2.common.grpc.EventID;
 import com.exactpro.th2.common.grpc.RawMessage;
 import com.exactpro.th2.common.grpc.RawMessageBatch;
+import com.exactpro.th2.common.grpc.RawMessageMetadata;
 import com.exactpro.th2.common.metrics.CommonMetrics;
 import com.exactpro.th2.common.schema.factory.CommonFactory;
 import com.exactpro.th2.common.schema.message.MessageRouter;
@@ -64,7 +65,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static java.util.Comparator.comparing;
-
 
 public class Main {
 
@@ -162,13 +162,19 @@ public class Main {
                     .map(RawMessage.Builder::getBody)
                     .orElseThrow(() -> new IllegalStateException("At leas one message must be in the list"));
             HeaderInfo extractedHeaderInfo = headerHolder.setHeaderForAlias(sessionAlias, extractedHeader);
-            if (builders.size() == 1) {
+            if (builders.size() < 2) {
                 return Collections.emptyList();
             } else {
-                return builders.stream()
+                List<RawMessage.Builder> result = builders.stream()
                         .skip(1)
                         .map(it -> validateAndAppend(headerHolder, extractedHeaderInfo, it, cfg.isValidateContent(), cfg.isValidateOnlyExtraData()))
                         .collect(Collectors.toList());
+                RawMessageMetadata.Builder firstMetadata = builders.stream().findFirst().orElseThrow().getMetadataBuilder();
+                if (firstMetadata.getPropertiesMap().containsKey(AbstractFileReader.MESSAGE_STATUS_PROPERTY)) {
+                    result.get(0).getMetadataBuilder().putProperties(AbstractFileReader.MESSAGE_STATUS_PROPERTY, firstMetadata.getPropertiesMap().get(AbstractFileReader.MESSAGE_STATUS_PROPERTY));
+                }
+
+                return result;
             }
         } else {
             builders.forEach(it -> validateAndAppend(headerHolder, headerForAlias, it, cfg.isValidateContent(), cfg.isValidateOnlyExtraData()));
