@@ -42,6 +42,7 @@ import com.exactpro.th2.common.grpc.EventID;
 import com.exactpro.th2.common.grpc.RawMessage;
 import com.exactpro.th2.common.grpc.RawMessageBatch;
 import com.exactpro.th2.common.grpc.RawMessageMetadata;
+import com.exactpro.th2.common.message.MessageUtils;
 import com.exactpro.th2.common.metrics.CommonMetrics;
 import com.exactpro.th2.common.schema.factory.CommonFactory;
 import com.exactpro.th2.common.schema.message.MessageRouter;
@@ -156,6 +157,7 @@ public class Main {
     ) {
         String sessionAlias = streamId.getSessionAlias();
         HeaderInfo headerForAlias = headerHolder.getHeaderForAlias(sessionAlias);
+        LOGGER.trace("attachHeaderOrHold: " + builders.stream().map(MessageUtils::toJson).collect(Collectors.joining("\n")));
         if (headerForAlias == null) {
             ByteString extractedHeader = builders.stream()
                     .findFirst()
