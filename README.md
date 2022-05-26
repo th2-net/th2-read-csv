@@ -1,4 +1,4 @@
-# Csv Reader User Manual 1.0.2
+# Csv Reader User Manual 1.1.0
 
 ## Document Information
 
@@ -86,7 +86,7 @@ spec:
 
 ## Changes
 
-### 1.0.2
+### 1.1.0
 
 + Feature: Status for first and last messages
 

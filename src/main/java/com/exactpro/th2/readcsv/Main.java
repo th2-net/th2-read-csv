@@ -157,7 +157,7 @@ public class Main {
         String sessionAlias = streamId.getSessionAlias();
         HeaderInfo headerForAlias = headerHolder.getHeaderForAlias(sessionAlias);
         if (LOGGER.isTraceEnabled()) {
-            LOGGER.trace("attachHeaderOrHold builders: " + builders.stream().map(MessageUtils::toJson).collect(Collectors.joining("\n")));
+            LOGGER.trace("attachHeaderOrHold builders: " + builders.stream().map(MessageUtils::toJson).collect(Collectors.joining(" | ")));
         }
         if (headerForAlias == null) {
             ByteString extractedHeader = builders.stream()
