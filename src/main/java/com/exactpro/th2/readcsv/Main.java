@@ -41,6 +41,7 @@ import com.exactpro.th2.common.grpc.EventBatch;
 import com.exactpro.th2.common.grpc.EventID;
 import com.exactpro.th2.common.grpc.RawMessage;
 import com.exactpro.th2.common.grpc.RawMessageBatch;
+import com.exactpro.th2.common.message.MessageUtils;
 import com.exactpro.th2.common.metrics.CommonMetrics;
 import com.exactpro.th2.common.schema.factory.CommonFactory;
 import com.exactpro.th2.common.schema.message.MessageRouter;
@@ -64,7 +65,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static java.util.Comparator.comparing;
-
 
 public class Main {
 
@@ -156,13 +156,16 @@ public class Main {
     ) {
         String sessionAlias = streamId.getSessionAlias();
         HeaderInfo headerForAlias = headerHolder.getHeaderForAlias(sessionAlias);
+        if (LOGGER.isTraceEnabled()) {
+            LOGGER.trace("attachHeaderOrHold builders: " + builders.stream().map(MessageUtils::toJson).collect(Collectors.joining(" | ")));
+        }
         if (headerForAlias == null) {
             ByteString extractedHeader = builders.stream()
                     .findFirst()
                     .map(RawMessage.Builder::getBody)
                     .orElseThrow(() -> new IllegalStateException("At leas one message must be in the list"));
             HeaderInfo extractedHeaderInfo = headerHolder.setHeaderForAlias(sessionAlias, extractedHeader);
-            if (builders.size() == 1) {
+            if (builders.size() < 2) {
                 return Collections.emptyList();
             } else {
                 return builders.stream()

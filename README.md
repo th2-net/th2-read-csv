@@ -1,4 +1,4 @@
-# Csv Reader User Manual 1.0.1
+# Csv Reader User Manual 1.1.0
 
 ## Document Information
 
@@ -67,7 +67,7 @@ spec:
         memory: 100Mi
         cpu: 50m
 ```
-
+ 
 + logDirectory - the directory to watch CSV files
 + aliases - the mapping between alias and files parameters that correspond to that alias. 
     + nameRegexp - regular expressions that is to match the file to read. **The files that matches the alias by the regexp will be read one by one**;
@@ -85,6 +85,10 @@ spec:
   Works only with `validateContent` set to `true`. The default value is `false`
 
 ## Changes
+
+### 1.1.0
+
++ Feature: Status for first and last messages
 
 ### 1.0.1
 
