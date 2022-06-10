@@ -38,8 +38,11 @@ import com.exactpro.th2.readcsv.exception.MalformedCsvException;
 import com.google.protobuf.ByteString;
 import com.opencsv.ConfigurableCsvParser;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class CsvContentParser implements ContentParser<BufferedReader> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(CsvContentParser.class);
     private static final byte[] NEW_LINE_BYTES = {'\n'};
     private final Map<String, CsvFileConfiguration> configurationMap;
 
@@ -53,6 +56,7 @@ public class CsvContentParser implements ContentParser<BufferedReader> {
     @Override
     public boolean canParse(@NotNull StreamId streamId, BufferedReader bufferedReader, boolean considerNoFutureUpdates) {
         List<String> lines = tryReadRecord(getConfiguration(streamId), streamId, bufferedReader, considerNoFutureUpdates);
+        LOGGER.trace("Can parse next lines (noFutureUpdates: {}): {}", considerNoFutureUpdates, lines);
         return !lines.isEmpty();
     }
 

@@ -85,7 +85,15 @@ jar {
 }
 
 description = 'CSV reader client'
-sourceCompatibility = '11'
+sourceCompatibility = 11
+targetCompatibility = 11
+
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile) {
+    kotlinOptions {
+        jvmTarget = "11"
+    }
+}
+
 applicationName = 'service'
 
 distTar {
