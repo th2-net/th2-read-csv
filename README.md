@@ -1,4 +1,4 @@
-# Csv Reader User Manual 1.1.0
+# Csv Reader User Manual 1.2.0
 
 ## Document Information
 
@@ -85,6 +85,11 @@ spec:
   Works only with `validateContent` set to `true`. The default value is `false`
 
 ## Changes
+
+### 1.2.0
++ Updated `kotlin` from 1.4.32 to 1.6.21
++ Updated `common` form 3.16.1 to 3.44.0
++ 
 
 ### 1.1.0
 
