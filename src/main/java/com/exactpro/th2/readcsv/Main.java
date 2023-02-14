@@ -100,12 +100,7 @@ public class Main {
                     path -> true
             );
 
-            Event rootEvent = Event.start().endTimestamp()
-                    .name("CSV reader for " + String.join(",", configuration.getAliases().keySet()))
-                    .type("Microservice");
-            var protoEvent = rootEvent.toProto(null);
-            eventBatchRouter.sendAll(EventBatch.newBuilder().addEvents(protoEvent).build());
-            EventID rootId = protoEvent.getId();
+            var rootId = commonFactory.getRootEventId();
             var headerHolder = new HeaderHolder(configuration.getAliases());
 
             AbstractFileReader<LineNumberReader> reader = new DefaultFileReader.Builder<>(
