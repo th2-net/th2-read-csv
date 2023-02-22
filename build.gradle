@@ -19,7 +19,7 @@ plugins {
     id 'application'
     id 'com.palantir.docker' version '0.25.0'
     id 'org.jetbrains.kotlin.jvm' version '1.6.21'
-    id "org.owasp.dependencycheck" version "7.4.4"
+    id "org.owasp.dependencycheck" version "8.1.0"
 }
 
 dependencyCheck {
@@ -51,8 +51,8 @@ repositories {
 }
 
 dependencies {
-    api platform('com.exactpro.th2:bom:4.1.0')
-    implementation 'com.exactpro.th2:common:3.44.0'
+    api platform('com.exactpro.th2:bom:4.2.0')
+    implementation 'com.exactpro.th2:common:3.44.1'
     api 'com.exactpro.th2:read-file-common-core:1.5.1'
     implementation 'com.opencsv:opencsv:5.7.0'
 
@@ -106,4 +106,8 @@ docker {
 
 application {
     mainClassName = "com.exactpro.th2.readcsv.Main"
+}
+
+dependencyCheck {
+    formats=['SARIF']
 }
