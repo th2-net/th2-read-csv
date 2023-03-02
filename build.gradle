@@ -23,8 +23,14 @@ plugins {
 }
 
 dependencyCheck {
-    format='HTML'
+    formats=['SARIF', 'JSON', 'HTML']
     failBuildOnCVSS=5
+
+    analyzers {
+        assemblyEnabled = false
+        nugetconfEnabled = false
+        nodeEnabled = false
+    }
 }
 
 group 'com.exactpro.th2'
@@ -56,7 +62,7 @@ dependencies {
         exclude group: 'com.fasterxml.jackson.dataformat', module: 'jackson-dataformat-yaml' // because of the vulnerability
         exclude group: 'org.slf4j', module: 'slf4j-log4j12' // because of the vulnerability
     }
-    api 'com.exactpro.th2:read-file-common-core:2.0.0-dev'
+    api 'com.exactpro.th2:read-file-common-core:2.0.0-dev-version-2+'
     implementation 'com.opencsv:opencsv:5.7.0'
 
     implementation 'javax.annotation:javax.annotation-api:1.3.2'
