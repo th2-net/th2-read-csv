@@ -1,4 +1,4 @@
-# Csv Reader User Manual 1.2.0
+# Csv Reader User Manual 2.0.1
 
 ## Document Information
 
@@ -86,10 +86,13 @@ spec:
 
 ## Changes
 
+### 1.2.1
++ Updated `bom` from 4.1.0 to 4.2.0
++ Updated `common` form 3.44.0 to 3.44.1
+
 ### 1.2.0
 + Updated `kotlin` from 1.4.32 to 1.6.21
 + Updated `common` form 3.16.1 to 3.44.0
-+ 
 
 ### 1.1.0
 

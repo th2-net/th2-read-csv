@@ -16,6 +16,7 @@
 
 package com.exactpro.th2.readcsv;
 
+import com.exactpro.th2.common.grpc.MessageID;
 import java.io.IOException;
 import java.io.LineNumberReader;
 import java.nio.file.Files;
@@ -103,12 +104,13 @@ public class Main {
             var rootId = commonFactory.getRootEventId();
             var headerHolder = new HeaderHolder(configuration.getAliases());
 
-            AbstractFileReader<LineNumberReader> reader = new DefaultFileReader.Builder<>(
+            AbstractFileReader<LineNumberReader> reader = new DefaultFileReader.Builder<LineNumberReader>(
                     configuration.getCommon(),
                     directoryChecker,
                     new CsvContentParser(configuration.getAliases()),
                     new MovedFileTracker(configuration.getSourceDirectory()),
                     new InMemoryReaderState(),
+                    streamId -> commonFactory.newMessageIDBuilder().build(),
                     Main::createSource
             )
                     .readFileImmediately()

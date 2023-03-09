@@ -19,12 +19,18 @@ plugins {
     id 'application'
     id 'com.palantir.docker' version '0.25.0'
     id 'org.jetbrains.kotlin.jvm' version '1.6.21'
-    id "org.owasp.dependencycheck" version "7.4.4"
+    id "org.owasp.dependencycheck" version "8.1.2"
 }
 
 dependencyCheck {
-    format='HTML'
+    formats=['SARIF', 'JSON', 'HTML']
     failBuildOnCVSS=5
+
+    analyzers {
+        assemblyEnabled = false
+        nugetconfEnabled = false
+        nodeEnabled = false
+    }
 }
 
 group 'com.exactpro.th2'
@@ -51,8 +57,11 @@ repositories {
 }
 
 dependencies {
-    api platform('com.exactpro.th2:bom:4.1.0')
-    implementation 'com.exactpro.th2:common:5.1.0-dev-version-5+'
+    api platform('com.exactpro.th2:bom:4.2.0')
+    implementation ('com.exactpro.th2:common:5.2.0-dev') {
+        exclude group: 'com.fasterxml.jackson.dataformat', module: 'jackson-dataformat-yaml' // because of the vulnerability
+        exclude group: 'org.slf4j', module: 'slf4j-log4j12' // because of the vulnerability
+    }
     api 'com.exactpro.th2:read-file-common-core:2.0.0-dev-version-2+'
     implementation 'com.opencsv:opencsv:5.7.0'
 
@@ -107,3 +116,13 @@ docker {
 application {
     mainClassName = "com.exactpro.th2.readcsv.Main"
 }
+
+dependencyCheck {
+    formats=['SARIF', 'JSON', 'HTML']
+    failBuildOnCVSS=5
+
+    analyzers {
+        assemblyEnabled = false
+        nugetconfEnabled = false
+        nodeEnabled = false
+    }}
