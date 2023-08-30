@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Exactpro (Exactpro Systems Limited)
+ * Copyright 2020-2023 Exactpro (Exactpro Systems Limited)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 
 import com.exactpro.th2.readcsv.cfg.CsvFileConfiguration;
-import com.google.protobuf.ByteString;
 import com.opencsv.ConfigurableCsvParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,13 +33,12 @@ import org.slf4j.LoggerFactory;
 import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.toUnmodifiableMap;
 
-public class HeaderHolder {
+public abstract class HeaderHolder<CONTENT_TYPE> {
     private static final Logger LOGGER = LoggerFactory.getLogger(HeaderHolder.class);
-    private static final ByteString NEW_LINE = ByteString.copyFrom(new byte[]{'\n'});
-    private static final Charset CHARSET = StandardCharsets.UTF_8;
+    protected static final Charset CHARSET = StandardCharsets.UTF_8;
 
-    private final Map<String, HeaderInfo> encodedHeadersByAlias = new ConcurrentHashMap<>();
-    private final Map<String, HeaderInfo> constantHeadersByAlias;
+    private final Map<String, HeaderInfo<CONTENT_TYPE>> encodedHeadersByAlias = new ConcurrentHashMap<>();
+    private final Map<String, HeaderInfo<CONTENT_TYPE>> constantHeadersByAlias;
     private final Map<String, CsvFileConfiguration> cfgByAlias;
 
     public HeaderHolder(Map<String, CsvFileConfiguration> configurationMap) {
@@ -53,56 +51,52 @@ public class HeaderHolder {
                 );
     }
 
-    public void validateContentSize(HeaderInfo headerInfo, ByteString content, boolean reportOnlyExtraData) {
+    public void validateContentSize(HeaderInfo<CONTENT_TYPE> headerInfo, CONTENT_TYPE content, boolean reportOnlyExtraData) {
         CsvFileConfiguration cfg = Objects.requireNonNull(cfgByAlias.get(headerInfo.getAlias()),
                 () -> "Unknown alias: " + headerInfo.getAlias());
-        int contentSize = extractColumnsNumber(content, cfg.getDelimiter());
+        int contentSize = extractColumnsNumber(contentToString(content), cfg.getDelimiter());
         if (!reportOnlyExtraData && contentSize < headerInfo.getSize()) {
             throw new IllegalStateException("The number of columns in the content is less then the header size. Header size: "
-                    + headerInfo.getSize() + "; Content size: " + contentSize + "; Content: " + content.toString(CHARSET));
+                    + headerInfo.getSize() + "; Content size: " + contentSize + "; Content: " + contentToString(content));
         }
 
         if (contentSize > headerInfo.getSize()) {
             throw new IllegalStateException("The number of columns in the content is greater then the header size. Header size: "
-                    + headerInfo.getSize() + "; Content: " + contentSize + "; Content: " + content.toString(CHARSET));
+                    + headerInfo.getSize() + "; Content: " + contentSize + "; Content: " + contentToString(content));
         }
     }
 
-    private static HeaderInfo formatHeader(String alias, CsvFileConfiguration configuration) {
-        ByteString content = ByteString.copyFrom(
-                String.join(Character.toString(configuration.getDelimiter()), configuration.getHeader()) + '\n',
-                CHARSET
-        );
-        return new HeaderInfo(alias, configuration.getHeader().size(), content);
-    }
+    protected abstract String contentToString(CONTENT_TYPE content);
+    protected abstract HeaderInfo<CONTENT_TYPE> formatHeader(String alias, CsvFileConfiguration configuration);
+    protected abstract CONTENT_TYPE addNewLine(CONTENT_TYPE content);
 
     @Nullable
-    public HeaderInfo getHeaderForAlias(String alias) {
+    public HeaderInfo<CONTENT_TYPE> getHeaderForAlias(String alias) {
         return constantHeadersByAlias.getOrDefault(alias, encodedHeadersByAlias.get(alias));
     }
 
-    public HeaderInfo setHeaderForAlias(String alias, ByteString encodedHeader) {
+    public HeaderInfo<CONTENT_TYPE> setHeaderForAlias(String alias, CONTENT_TYPE encodedHeader) {
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Set header {} for alias: {}", encodedHeader.toString(CHARSET), alias);
+            LOGGER.debug("Set header {} for alias: {}", contentToString(encodedHeader), alias);
         }
-        ByteString content = encodedHeader.concat(NEW_LINE);
+
+        CONTENT_TYPE content = addNewLine(encodedHeader);
         CsvFileConfiguration cfg = Objects.requireNonNull(cfgByAlias.get(alias), () -> "Unexpected alias: " + alias);
-        HeaderInfo headerInfo = new HeaderInfo(alias, extractColumnsNumber(content, cfg.getDelimiter()), content);
+        HeaderInfo<CONTENT_TYPE> headerInfo = new HeaderInfo<>(alias, extractColumnsNumber(contentToString(content), cfg.getDelimiter()), content);
         encodedHeadersByAlias.put(alias, headerInfo);
         return headerInfo;
     }
 
     public void clearHeaderForAlias(String alias) {
-        HeaderInfo removed = encodedHeadersByAlias.remove(alias);
+        HeaderInfo<CONTENT_TYPE> removed = encodedHeadersByAlias.remove(alias);
         if (removed != null) {
             if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Header for alias {} removed. Header: {}", alias, removed.getContent().toString(CHARSET));
+                LOGGER.debug("Header for alias {} removed. Header: {}", alias, contentToString(removed.getContent()));
             }
         }
     }
 
-    private static int extractColumnsNumber(ByteString content, char delimiter) {
-        String headerString = content.toString(CHARSET);
+    private static int extractColumnsNumber(String headerString, char delimiter) {
         try {
             String[] strings = new ConfigurableCsvParser(delimiter).parseLine(headerString);
             if (strings.length == 0) {
@@ -114,3 +108,4 @@ public class HeaderHolder {
         }
     }
 }
+

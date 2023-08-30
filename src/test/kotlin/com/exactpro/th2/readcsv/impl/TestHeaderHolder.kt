@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 
 class TestHeaderHolder {
-    private val holder = HeaderHolder(
+    private val holder = ProtoHeaderHolder(
         mapOf(
             "A" to CsvFileConfiguration(".*", ","),
             "B" to CsvFileConfiguration(".*", ",").apply {

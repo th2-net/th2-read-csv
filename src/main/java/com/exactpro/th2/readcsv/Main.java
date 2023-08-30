@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2020 Exactpro (Exactpro Systems Limited)
+ * Copyright 2020-2023 Exactpro (Exactpro Systems Limited)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,12 @@
 
 package com.exactpro.th2.readcsv;
 
-import com.exactpro.th2.common.grpc.MessageID;
 import java.io.IOException;
 import java.io.LineNumberReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -37,28 +37,34 @@ import java.util.stream.Collectors;
 
 import com.exactpro.th2.common.event.Event;
 import com.exactpro.th2.common.event.EventUtils;
-import com.exactpro.th2.common.grpc.Direction;
 import com.exactpro.th2.common.grpc.EventBatch;
 import com.exactpro.th2.common.grpc.EventID;
-import com.exactpro.th2.common.grpc.RawMessage;
-import com.exactpro.th2.common.grpc.RawMessageBatch;
 import com.exactpro.th2.common.message.MessageUtils;
 import com.exactpro.th2.common.metrics.CommonMetrics;
 import com.exactpro.th2.common.schema.factory.CommonFactory;
 import com.exactpro.th2.common.schema.message.MessageRouter;
+import com.exactpro.th2.common.schema.message.impl.rabbitmq.transport.GroupBatch;
+import com.exactpro.th2.common.schema.message.impl.rabbitmq.transport.MessageGroup;
+import com.exactpro.th2.common.schema.message.impl.rabbitmq.transport.RawMessage;
+import com.exactpro.th2.common.schema.message.impl.rabbitmq.transport.MessageId;
 import com.exactpro.th2.read.file.common.AbstractFileReader;
 import com.exactpro.th2.read.file.common.DirectoryChecker;
 import com.exactpro.th2.read.file.common.FileSourceWrapper;
 import com.exactpro.th2.read.file.common.MovedFileTracker;
 import com.exactpro.th2.read.file.common.StreamId;
-import com.exactpro.th2.read.file.common.impl.DefaultFileReader;
+import com.exactpro.th2.read.file.common.impl.ProtoDefaultFileReader;
 import com.exactpro.th2.read.file.common.impl.RecoverableBufferedReaderWrapper;
+import com.exactpro.th2.read.file.common.impl.TransportDefaultFileReader;
 import com.exactpro.th2.read.file.common.state.impl.InMemoryReaderState;
 import com.exactpro.th2.readcsv.cfg.ReaderConfig;
-import com.exactpro.th2.readcsv.impl.CsvContentParser;
 import com.exactpro.th2.readcsv.impl.HeaderHolder;
 import com.exactpro.th2.readcsv.impl.HeaderInfo;
+import com.exactpro.th2.readcsv.impl.ProtoCsvContentParser;
+import com.exactpro.th2.readcsv.impl.ProtoHeaderHolder;
+import com.exactpro.th2.readcsv.impl.TransportCsvContentParser;
+import com.exactpro.th2.readcsv.impl.TransportHeaderHolder;
 import com.google.protobuf.ByteString;
+import io.netty.buffer.ByteBuf;
 import kotlin.Unit;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jetbrains.annotations.NotNull;
@@ -82,7 +88,8 @@ public class Main {
             CommonFactory commonFactory = CommonFactory.createFromArguments(args);
             toDispose.add(commonFactory);
 
-            MessageRouter<RawMessageBatch> rawMessageBatchRouter = commonFactory.getMessageRouterRawBatch();
+            var boxBookName = commonFactory.getBoxConfiguration().getBookName();
+
             MessageRouter<EventBatch> eventBatchRouter = commonFactory.getEventBatchRouter();
 
             ReaderConfig configuration = commonFactory.getCustomConfiguration(ReaderConfig.class, ReaderConfig.MAPPER);
@@ -95,33 +102,66 @@ public class Main {
                     configuration.getSourceDirectory(),
                     (Path path) -> configuration.getAliases().entrySet().stream()
                             .filter(entry -> entry.getValue().getNameRegexp().matcher(path.getFileName().toString()).matches())
-                            .map(it -> new StreamId(it.getKey(), Direction.FIRST))
+                            .map(it -> new StreamId(it.getKey()))
                             .collect(Collectors.toSet()),
                     files -> files.sort(pathComparator),
                     path -> true
             );
 
             var rootId = commonFactory.getRootEventId();
-            var headerHolder = new HeaderHolder(configuration.getAliases());
+            final Runnable readerProcessUpdates;
 
-            AbstractFileReader<LineNumberReader> reader = new DefaultFileReader.Builder<LineNumberReader>(
-                    configuration.getCommon(),
-                    directoryChecker,
-                    new CsvContentParser(configuration.getAliases()),
-                    new MovedFileTracker(configuration.getSourceDirectory()),
-                    new InMemoryReaderState(),
-                    streamId -> commonFactory.newMessageIDBuilder().build(),
-                    Main::createSource
-            )
-                    .readFileImmediately()
-                    .acceptNewerFiles()
-                    .onSourceFound((streamId, path) -> clearHeader(headerHolder, streamId))
-                    .onContentRead((streamId, path, builders) -> attachHeaderOrHold(headerHolder, streamId, builders, configuration))
-                    .onStreamData((streamId, builders) -> publishMessages(rawMessageBatchRouter, streamId, builders))
-                    .onError((streamId, message, ex) -> publishErrorEvent(eventBatchRouter, streamId, message, ex, rootId))
-                    .onSourceCorrupted((streamId, path, e) -> publishSourceCorruptedEvent(eventBatchRouter, path, streamId, e, rootId))
-                    .build();
-            toDispose.add(reader);
+            if (configuration.isUseTransport()) {
+                var headerHolder = new TransportHeaderHolder(configuration.getAliases());
+                var router = commonFactory.getTransportGroupBatchRouter();
+
+                AbstractFileReader<LineNumberReader, com.exactpro.th2.common.schema.message.impl.rabbitmq.transport.RawMessage.Builder, MessageId.Builder> reader = new TransportDefaultFileReader.Builder<>(
+                        configuration.getCommon(),
+                        directoryChecker,
+                        new TransportCsvContentParser(configuration.getAliases()),
+                        new MovedFileTracker(configuration.getSourceDirectory()),
+                        new InMemoryReaderState(),
+                        streamId -> MessageId.builder(),
+                        Main::createSource
+                )
+                        .readFileImmediately()
+                        .acceptNewerFiles()
+                        .onSourceFound((streamId, path) -> clearHeader(headerHolder, streamId))
+                        .onContentRead((streamId, path, builders) -> transportAttachHeaderOrHold(headerHolder, streamId, builders, configuration))
+                        .onStreamData((streamId, builders) -> publishTransportMessages(router, streamId, builders, boxBookName))
+                        .onError((streamId, message, ex) -> publishErrorEvent(eventBatchRouter, streamId, message, ex, rootId))
+                        .onSourceCorrupted((streamId, path, e) -> publishSourceCorruptedEvent(eventBatchRouter, path, streamId, e, rootId))
+                        .build();
+
+                toDispose.add(reader);
+
+                readerProcessUpdates = reader::processUpdates;
+            } else {
+                var headerHolder = new ProtoHeaderHolder(configuration.getAliases());
+                var router = commonFactory.getMessageRouterRawBatch();
+
+                AbstractFileReader<LineNumberReader, com.exactpro.th2.common.grpc.RawMessage.Builder, com.exactpro.th2.common.grpc.MessageID> reader = new ProtoDefaultFileReader.Builder<>(
+                        configuration.getCommon(),
+                        directoryChecker,
+                        new ProtoCsvContentParser(configuration.getAliases()),
+                        new MovedFileTracker(configuration.getSourceDirectory()),
+                        new InMemoryReaderState(),
+                        streamId -> commonFactory.newMessageIDBuilder().build(),
+                        Main::createSource
+                )
+                        .readFileImmediately()
+                        .acceptNewerFiles()
+                        .onSourceFound((streamId, path) -> clearHeader(headerHolder, streamId))
+                        .onContentRead((streamId, path, builders) -> attachHeaderOrHold(headerHolder, streamId, builders, configuration))
+                        .onStreamData((streamId, builders) -> publishMessages(router, streamId, builders))
+                        .onError((streamId, message, ex) -> publishErrorEvent(eventBatchRouter, streamId, message, ex, rootId))
+                        .onSourceCorrupted((streamId, path, e) -> publishSourceCorruptedEvent(eventBatchRouter, path, streamId, e, rootId))
+                        .build();
+
+                toDispose.add(reader);
+
+                readerProcessUpdates = reader::processUpdates;
+            }
 
             ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
             toDispose.add(() -> {
@@ -132,8 +172,7 @@ public class Main {
                 }
             });
 
-
-            ScheduledFuture<?> future = executorService.scheduleWithFixedDelay(reader::processUpdates, 0, configuration.getPullingInterval().toMillis(), TimeUnit.MILLISECONDS);
+            ScheduledFuture<?> future = executorService.scheduleWithFixedDelay(readerProcessUpdates, 0, configuration.getPullingInterval().toMillis(), TimeUnit.MILLISECONDS);
             CommonMetrics.setReadiness(true);
 
             awaitShutdown(lock, condition);
@@ -145,23 +184,23 @@ public class Main {
     }
 
     @NotNull
-    private static Collection<RawMessage.Builder> attachHeaderOrHold(
-            HeaderHolder headerHolder,
+    private static Collection<? extends com.exactpro.th2.common.grpc.RawMessage.Builder> attachHeaderOrHold(
+            HeaderHolder<ByteString> headerHolder,
             StreamId streamId,
-            Collection<RawMessage.Builder> builders,
+            Collection<? extends com.exactpro.th2.common.grpc.RawMessage.Builder> builders,
             ReaderConfig cfg
     ) {
         String sessionAlias = streamId.getSessionAlias();
-        HeaderInfo headerForAlias = headerHolder.getHeaderForAlias(sessionAlias);
+        HeaderInfo<ByteString> headerForAlias = headerHolder.getHeaderForAlias(sessionAlias);
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace("attachHeaderOrHold builders: " + builders.stream().map(MessageUtils::toJson).collect(Collectors.joining(" | ")));
         }
         if (headerForAlias == null) {
             ByteString extractedHeader = builders.stream()
                     .findFirst()
-                    .map(RawMessage.Builder::getBody)
-                    .orElseThrow(() -> new IllegalStateException("At leas one message must be in the list"));
-            HeaderInfo extractedHeaderInfo = headerHolder.setHeaderForAlias(sessionAlias, extractedHeader);
+                    .map(com.exactpro.th2.common.grpc.RawMessage.Builder::getBody)
+                    .orElseThrow(() -> new IllegalStateException("At least one message must be in the list"));
+            HeaderInfo<ByteString> extractedHeaderInfo = headerHolder.setHeaderForAlias(sessionAlias, extractedHeader);
             if (builders.size() < 2) {
                 return Collections.emptyList();
             } else {
@@ -176,10 +215,42 @@ public class Main {
         }
     }
 
-    private static RawMessage.Builder validateAndAppend(
-            HeaderHolder headerHolder,
-            HeaderInfo extractedHeader,
-            RawMessage.Builder it,
+    @NotNull
+    private static Collection<? extends com.exactpro.th2.common.schema.message.impl.rabbitmq.transport.RawMessage.Builder> transportAttachHeaderOrHold(
+            TransportHeaderHolder headerHolder,
+            StreamId streamId,
+            Collection<? extends com.exactpro.th2.common.schema.message.impl.rabbitmq.transport.RawMessage.Builder> builders,
+            ReaderConfig cfg
+    ) {
+        String sessionAlias = streamId.getSessionAlias();
+        HeaderInfo<ByteBuf> headerForAlias = headerHolder.getHeaderForAlias(sessionAlias);
+        if (LOGGER.isTraceEnabled()) {
+            LOGGER.trace("attachHeaderOrHold builders: " + builders.stream().map(com.exactpro.th2.common.schema.message.impl.rabbitmq.transport.RawMessage.Builder::toString).collect(Collectors.joining(" | ")));
+        }
+        if (headerForAlias == null) {
+            ByteBuf extractedHeader = builders.stream()
+                    .findFirst()
+                    .map(com.exactpro.th2.common.schema.message.impl.rabbitmq.transport.RawMessage.Builder::getBody)
+                    .orElseThrow(() -> new IllegalStateException("At least one message must be in the list"));
+            HeaderInfo<ByteBuf> extractedHeaderInfo = headerHolder.setHeaderForAlias(sessionAlias, extractedHeader);
+            if (builders.size() < 2) {
+                return Collections.emptyList();
+            } else {
+                return builders.stream()
+                        .skip(1)
+                        .map(it -> transportValidateAndAppend(headerHolder, extractedHeaderInfo, it, cfg.isValidateContent(), cfg.isValidateOnlyExtraData()))
+                        .collect(Collectors.toList());
+            }
+        } else {
+            builders.forEach(it -> transportValidateAndAppend(headerHolder, headerForAlias, it, cfg.isValidateContent(), cfg.isValidateOnlyExtraData()));
+            return builders;
+        }
+    }
+
+    private static com.exactpro.th2.common.grpc.RawMessage.Builder validateAndAppend(
+            HeaderHolder<ByteString> headerHolder,
+            HeaderInfo<ByteString> extractedHeader,
+            com.exactpro.th2.common.grpc.RawMessage.Builder it,
             boolean validate,
             boolean validateOnlyExtraData
     ) {
@@ -189,8 +260,21 @@ public class Main {
         return it.setBody(extractedHeader.getContent().concat(it.getBody()));
     }
 
+    private static com.exactpro.th2.common.schema.message.impl.rabbitmq.transport.RawMessage.Builder transportValidateAndAppend(
+            HeaderHolder<ByteBuf> headerHolder,
+            HeaderInfo<ByteBuf> extractedHeader,
+            com.exactpro.th2.common.schema.message.impl.rabbitmq.transport.RawMessage.Builder it,
+            boolean validate,
+            boolean validateOnlyExtraData
+    ) {
+        if (validate) {
+            headerHolder.validateContentSize(extractedHeader, it.getBody(), validateOnlyExtraData);
+        }
+        return it.setBody(extractedHeader.getContent().writeBytes(it.getBody()));
+    }
+
     @NotNull
-    private static Unit clearHeader(HeaderHolder headerHolder, StreamId streamId) {
+    private static Unit clearHeader(HeaderHolder<?> headerHolder, StreamId streamId) {
         headerHolder.clearHeaderForAlias(streamId.getSessionAlias());
         return Unit.INSTANCE;
     }
@@ -262,13 +346,30 @@ public class Main {
     }
 
     @NotNull
-    private static Unit publishMessages(MessageRouter<RawMessageBatch> rawMessageBatchRouter, StreamId streamId, List<RawMessage.Builder> builders) {
+    private static Unit publishMessages(MessageRouter<com.exactpro.th2.common.grpc.RawMessageBatch> rawMessageBatchRouter, StreamId streamId, List<? extends com.exactpro.th2.common.grpc.RawMessage.Builder> builders) {
         try {
-            RawMessageBatch.Builder builder = RawMessageBatch.newBuilder();
-            for (RawMessage.Builder msg : builders) {
+            com.exactpro.th2.common.grpc.RawMessageBatch.Builder builder = com.exactpro.th2.common.grpc.RawMessageBatch.newBuilder();
+            for (com.exactpro.th2.common.grpc.RawMessage.Builder msg : builders) {
                 builder.addMessages(msg);
             }
             rawMessageBatchRouter.sendAll(builder.build());
+        } catch (Exception e) {
+            LOGGER.error("Cannot publish batch for {}", streamId, e);
+        }
+        return Unit.INSTANCE;
+    }
+
+    @NotNull
+    private static Unit publishTransportMessages(MessageRouter<GroupBatch> transportBatchRouter, StreamId streamId, List<? extends RawMessage.Builder> builders, String bookName) {
+        try {
+            // messages are grouped by session aliases
+            String sessionGroup = builders.get(0).idBuilder().getSessionAlias();
+
+            List<MessageGroup> groups = new ArrayList<>();
+            for (RawMessage.Builder msg : builders) {
+                groups.add(new MessageGroup(List.of(msg.build())));
+            }
+            transportBatchRouter.sendAll(new GroupBatch(bookName, sessionGroup, groups), "transport-group");
         } catch (Exception e) {
             LOGGER.error("Cannot publish batch for {}", streamId, e);
         }

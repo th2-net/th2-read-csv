@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Exactpro (Exactpro Systems Limited)
+ * Copyright 2020-2023 Exactpro (Exactpro Systems Limited)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.exactpro.th2.readcsv.impl
 
-import com.exactpro.th2.common.grpc.Direction
 import com.exactpro.th2.common.grpc.RawMessage
 import com.exactpro.th2.read.file.common.StreamId
 import com.exactpro.th2.readcsv.cfg.CsvFileConfiguration
 import com.exactpro.th2.readcsv.exception.MalformedCsvException
-import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.io.BufferedReader
 
 class TestCsvContentParser {
-    private val parser = CsvContentParser(
+    private val parser = ProtoCsvContentParser(
         mapOf(
             "test" to CsvFileConfiguration(".*", ",")
         )
     )
-    private val streamId = StreamId("test", Direction.FIRST)
+    private val streamId = StreamId("test")
 
     @Test
     fun `can parse valid csv`() {
