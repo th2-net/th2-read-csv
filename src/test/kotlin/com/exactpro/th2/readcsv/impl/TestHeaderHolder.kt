@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Exactpro (Exactpro Systems Limited)
+ * Copyright 2020-2023 Exactpro (Exactpro Systems Limited)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.exactpro.th2.readcsv.impl
 
 import com.exactpro.th2.readcsv.cfg.CsvFileConfiguration
@@ -20,6 +21,7 @@ import com.google.protobuf.ByteString
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 
+// TODO: th2 transport version of these tests should be added
 class TestHeaderHolder {
     private val holder = ProtoHeaderHolder(
         mapOf(

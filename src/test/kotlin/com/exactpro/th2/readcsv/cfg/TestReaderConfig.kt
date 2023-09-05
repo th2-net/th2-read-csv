@@ -57,5 +57,7 @@ class TestReaderConfig {
 
         Assertions.assertEquals(',', cfg.aliases["A"]?.delimiter)
         Assertions.assertEquals(';', cfg.aliases["B"]?.delimiter)
+        cfg.pullingInterval
+        Assertions.assertEquals(true, cfg.isUseTransport)
     }
 }

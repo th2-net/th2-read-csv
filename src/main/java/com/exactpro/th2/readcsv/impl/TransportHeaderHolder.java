@@ -37,7 +37,7 @@ public class TransportHeaderHolder extends HeaderHolder<ByteBuf> {
 
     @Override
     protected String contentToString(ByteBuf content) {
-        return null;
+        return content.toString(CHARSET);
     }
 
     @Override

@@ -16,6 +16,7 @@
 
 package com.exactpro.th2.readcsv.impl;
 
+import com.exactpro.th2.common.schema.message.impl.rabbitmq.transport.RawMessage;
 import com.exactpro.th2.readcsv.cfg.CsvFileConfiguration;
 import java.util.Map;
 
@@ -25,7 +26,7 @@ public class TransportCsvContentParser extends AbstractCsvContentParser<com.exac
     }
 
     @Override
-    com.exactpro.th2.common.schema.message.impl.rabbitmq.transport.RawMessage.Builder createMessageBuilder(byte[] body) {
-        return com.exactpro.th2.common.schema.message.impl.rabbitmq.transport.RawMessage.builder().setBody(body);
+    protected RawMessage.Builder createMessageBuilder(byte[] body) {
+        return RawMessage.builder().setBody(body);
     }
 }

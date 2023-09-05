@@ -54,7 +54,7 @@ abstract class AbstractCsvContentParser<MESSAGE_BUILDER> implements ContentParse
         return !lines.isEmpty();
     }
 
-    abstract MESSAGE_BUILDER createMessageBuilder(byte[] body);
+    protected abstract MESSAGE_BUILDER createMessageBuilder(byte[] body);
 
     @NotNull
     @Override

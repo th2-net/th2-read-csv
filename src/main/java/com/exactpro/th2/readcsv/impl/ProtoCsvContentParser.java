@@ -18,7 +18,8 @@ package com.exactpro.th2.readcsv.impl;
 
 import com.exactpro.th2.common.grpc.RawMessage;
 import com.exactpro.th2.readcsv.cfg.CsvFileConfiguration;
-import com.google.protobuf.ByteString;
+import com.google.protobuf.UnsafeByteOperations;
+
 import java.util.Map;
 
 public class ProtoCsvContentParser extends AbstractCsvContentParser<RawMessage.Builder> {
@@ -27,7 +28,7 @@ public class ProtoCsvContentParser extends AbstractCsvContentParser<RawMessage.B
     }
 
     @Override
-    RawMessage.Builder createMessageBuilder(byte[] body) {
-        return RawMessage.newBuilder().setBody(ByteString.copyFrom(body));
+    protected RawMessage.Builder createMessageBuilder(byte[] body) {
+        return RawMessage.newBuilder().setBody(UnsafeByteOperations.unsafeWrap(body));
     }
 }
