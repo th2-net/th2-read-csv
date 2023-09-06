@@ -28,7 +28,7 @@ import com.exactpro.th2.common.metrics.CommonMetrics;
 import com.exactpro.th2.common.schema.factory.CommonFactory;
 import com.exactpro.th2.readcsv.cfg.ReaderConfig;
 import com.exactpro.th2.readcsv.impl.ProtoReaderFactory;
-import com.exactpro.th2.readcsv.impl.ReaderAbstractFactory;
+import com.exactpro.th2.readcsv.impl.AbstractReaderFactory;
 import com.exactpro.th2.readcsv.impl.TransportReaderFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,7 +53,7 @@ public class Main {
                 throw new IllegalArgumentException("Pulling interval " + configuration.getPullingInterval() + " must not be negative");
             }
 
-            ReaderAbstractFactory readerFactory;
+            AbstractReaderFactory readerFactory;
             if (configuration.isUseTransport()) {
                 readerFactory = new TransportReaderFactory(configuration, commonFactory);
             } else {

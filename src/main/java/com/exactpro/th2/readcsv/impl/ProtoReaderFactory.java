@@ -18,15 +18,16 @@ package com.exactpro.th2.readcsv.impl;
 
 import com.exactpro.th2.common.grpc.EventBatch;
 import com.exactpro.th2.common.grpc.EventID;
+import com.exactpro.th2.common.grpc.MessageID;
 import com.exactpro.th2.common.grpc.RawMessage;
 import com.exactpro.th2.common.grpc.RawMessageBatch;
 import com.exactpro.th2.common.message.MessageUtils;
 import com.exactpro.th2.common.schema.factory.CommonFactory;
 import com.exactpro.th2.common.schema.message.MessageRouter;
-import com.exactpro.th2.read.file.common.AbstractFileReader;
 import com.exactpro.th2.read.file.common.DirectoryChecker;
 import com.exactpro.th2.read.file.common.MovedFileTracker;
 import com.exactpro.th2.read.file.common.StreamId;
+import com.exactpro.th2.read.file.common.impl.DefaultFileReader;
 import com.exactpro.th2.read.file.common.impl.ProtoDefaultFileReader;
 import com.exactpro.th2.read.file.common.state.impl.InMemoryReaderState;
 import com.exactpro.th2.readcsv.cfg.ReaderConfig;
@@ -42,16 +43,19 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class ProtoReaderFactory extends ReaderAbstractFactory {
+public class ProtoReaderFactory extends AbstractReaderFactory {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProtoReaderFactory.class);
 
     public ProtoReaderFactory(ReaderConfig configuration, CommonFactory commonFactory) {
         super(configuration, commonFactory);
     }
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ProtoReaderFactory.class);
-
     @Override
-    protected AbstractFileReader<LineNumberReader, ?, ?> buildReader(MessageRouter<EventBatch> eventBatchRouter, DirectoryChecker directoryChecker, EventID rootId) {
+    protected DefaultFileReader.Builder<LineNumberReader, RawMessage.Builder, MessageID> prepareReaderBuilder(
+            MessageRouter<EventBatch> eventBatchRouter,
+            DirectoryChecker directoryChecker,
+            EventID rootId
+    ) {
         var headerHolder = new ProtoHeaderHolder(configuration.getAliases());
         var router = commonFactory.getMessageRouterRawBatch();
 
@@ -62,16 +66,11 @@ public class ProtoReaderFactory extends ReaderAbstractFactory {
                 new MovedFileTracker(configuration.getSourceDirectory()),
                 new InMemoryReaderState(),
                 streamId -> commonFactory.newMessageIDBuilder().build(),
-                ReaderAbstractFactory::createSource
+                AbstractReaderFactory::createSource
         )
-                .readFileImmediately()
-                .acceptNewerFiles()
                 .onSourceFound((streamId, path) -> clearHeader(headerHolder, streamId))
                 .onContentRead((streamId, path, builders) -> attachHeaderOrHold(headerHolder, streamId, builders, configuration))
-                .onStreamData((streamId, builders) -> publishMessages(router, streamId, builders))
-                .onError((streamId, message, ex) -> publishErrorEvent(eventBatchRouter, streamId, message, ex, rootId))
-                .onSourceCorrupted((streamId, path, e) -> publishSourceCorruptedEvent(eventBatchRouter, path, streamId, e, rootId))
-                .build();
+                .onStreamData((streamId, builders) -> publishMessages(router, streamId, builders));
     }
 
     @NotNull
@@ -120,7 +119,11 @@ public class ProtoReaderFactory extends ReaderAbstractFactory {
     }
 
     @NotNull
-    private static Unit publishMessages(MessageRouter<RawMessageBatch> rawMessageBatchRouter, StreamId streamId, List<? extends RawMessage.Builder> builders) {
+    private static Unit publishMessages(
+            MessageRouter<RawMessageBatch> rawMessageBatchRouter,
+            StreamId streamId,
+            List<? extends RawMessage.Builder> builders
+    ) {
         if (builders.isEmpty()) {
             return Unit.INSTANCE;
         }

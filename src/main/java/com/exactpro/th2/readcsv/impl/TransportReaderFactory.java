@@ -24,10 +24,10 @@ import com.exactpro.th2.common.schema.message.impl.rabbitmq.transport.GroupBatch
 import com.exactpro.th2.common.schema.message.impl.rabbitmq.transport.MessageGroup;
 import com.exactpro.th2.common.schema.message.impl.rabbitmq.transport.MessageId;
 import com.exactpro.th2.common.schema.message.impl.rabbitmq.transport.RawMessage;
-import com.exactpro.th2.read.file.common.AbstractFileReader;
 import com.exactpro.th2.read.file.common.DirectoryChecker;
 import com.exactpro.th2.read.file.common.MovedFileTracker;
 import com.exactpro.th2.read.file.common.StreamId;
+import com.exactpro.th2.read.file.common.impl.DefaultFileReader;
 import com.exactpro.th2.read.file.common.impl.TransportDefaultFileReader;
 import com.exactpro.th2.read.file.common.state.impl.InMemoryReaderState;
 import com.exactpro.th2.readcsv.cfg.ReaderConfig;
@@ -45,15 +45,19 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class TransportReaderFactory extends ReaderAbstractFactory {
+public class TransportReaderFactory extends AbstractReaderFactory {
+    private static final Logger LOGGER = LoggerFactory.getLogger(TransportReaderFactory.class);
+
     public TransportReaderFactory(ReaderConfig configuration, CommonFactory commonFactory) {
         super(configuration, commonFactory);
     }
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TransportReaderFactory.class);
-
     @Override
-    protected AbstractFileReader<LineNumberReader, ?, ?> buildReader(MessageRouter<EventBatch> eventBatchRouter, DirectoryChecker directoryChecker, EventID rootId) {
+    protected DefaultFileReader.Builder<LineNumberReader, RawMessage.Builder, MessageId.Builder> prepareReaderBuilder(
+            MessageRouter<EventBatch> eventBatchRouter,
+            DirectoryChecker directoryChecker,
+            EventID rootId
+    ) {
         var headerHolder = new TransportHeaderHolder(configuration.getAliases());
         var router = commonFactory.getTransportGroupBatchRouter();
 
@@ -64,16 +68,11 @@ public class TransportReaderFactory extends ReaderAbstractFactory {
                 new MovedFileTracker(configuration.getSourceDirectory()),
                 new InMemoryReaderState(),
                 streamId -> MessageId.builder(),
-                ReaderAbstractFactory::createSource
+                AbstractReaderFactory::createSource
         )
-                .readFileImmediately()
-                .acceptNewerFiles()
                 .onSourceFound((streamId, path) -> clearHeader(headerHolder, streamId))
                 .onContentRead((streamId, path, builders) -> transportAttachHeaderOrHold(headerHolder, streamId, builders, configuration))
-                .onStreamData((streamId, builders) -> publishTransportMessages(router, streamId, builders, commonFactory.getBoxConfiguration().getBookName()))
-                .onError((streamId, message, ex) -> publishErrorEvent(eventBatchRouter, streamId, message, ex, rootId))
-                .onSourceCorrupted((streamId, path, e) -> publishSourceCorruptedEvent(eventBatchRouter, path, streamId, e, rootId))
-                .build();
+                .onStreamData((streamId, builders) -> publishTransportMessages(router, streamId, builders, commonFactory.getBoxConfiguration().getBookName()));
     }
 
     @NotNull
@@ -123,7 +122,12 @@ public class TransportReaderFactory extends ReaderAbstractFactory {
     }
 
     @NotNull
-    private static Unit publishTransportMessages(MessageRouter<GroupBatch> transportBatchRouter, StreamId streamId, List<? extends RawMessage.Builder> builders, String bookName) {
+    private static Unit publishTransportMessages(
+            MessageRouter<GroupBatch> transportBatchRouter,
+            StreamId streamId,
+            List<? extends RawMessage.Builder> builders,
+            String bookName
+    ) {
         if (builders.isEmpty()) {
             return Unit.INSTANCE;
         }

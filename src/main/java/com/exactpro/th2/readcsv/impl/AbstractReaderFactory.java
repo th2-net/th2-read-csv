@@ -26,6 +26,7 @@ import com.exactpro.th2.read.file.common.AbstractFileReader;
 import com.exactpro.th2.read.file.common.DirectoryChecker;
 import com.exactpro.th2.read.file.common.FileSourceWrapper;
 import com.exactpro.th2.read.file.common.StreamId;
+import com.exactpro.th2.read.file.common.impl.DefaultFileReader;
 import com.exactpro.th2.read.file.common.impl.RecoverableBufferedReaderWrapper;
 import com.exactpro.th2.readcsv.cfg.ReaderConfig;
 import kotlin.Unit;
@@ -43,17 +44,16 @@ import java.util.stream.Collectors;
 
 import static java.util.Comparator.comparing;
 
-public abstract class ReaderAbstractFactory {
-
-    public ReaderAbstractFactory(ReaderConfig configuration, CommonFactory commonFactory) {
-        this.configuration = configuration;
-        this.commonFactory = commonFactory;
-    }
-
+public abstract class AbstractReaderFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProtoReaderFactory.class);
 
     ReaderConfig configuration;
     CommonFactory commonFactory;
+
+    public AbstractReaderFactory(ReaderConfig configuration, CommonFactory commonFactory) {
+        this.configuration = configuration;
+        this.commonFactory = commonFactory;
+    }
 
     public AbstractFileReader<LineNumberReader, ?, ?> getReader() {
 
@@ -72,10 +72,19 @@ public abstract class ReaderAbstractFactory {
 
         var rootId = commonFactory.getRootEventId();
 
-        return buildReader(eventBatchRouter, directoryChecker, rootId);
+        return prepareReaderBuilder(eventBatchRouter, directoryChecker, rootId)
+                .readFileImmediately()
+                .acceptNewerFiles()
+                .onError((streamId, message, ex) -> publishErrorEvent(eventBatchRouter, streamId, message, ex, rootId))
+                .onSourceCorrupted((streamId, path, e) -> publishSourceCorruptedEvent(eventBatchRouter, path, streamId, e, rootId))
+                .build();
     }
 
-    protected abstract AbstractFileReader<LineNumberReader, ?, ?> buildReader(MessageRouter<EventBatch> eventBatchRouter, DirectoryChecker directoryChecker, EventID rootId);
+    protected abstract DefaultFileReader.Builder<LineNumberReader, ?, ?> prepareReaderBuilder(
+            MessageRouter<EventBatch> eventBatchRouter,
+            DirectoryChecker directoryChecker,
+            EventID rootId
+    );
 
     @NotNull
     protected static Unit clearHeader(HeaderHolder<?> headerHolder, StreamId streamId) {
