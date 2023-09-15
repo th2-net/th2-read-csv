@@ -1,4 +1,4 @@
-# Csv Reader User Manual 2.0.1
+# Csv Reader User Manual 2.1.0
 
 ## Document Information
 
@@ -83,8 +83,13 @@ spec:
   The default value is `true`;
 + validateOnlyExtraData - disables validation when the content size is less than the header size (probably some columns were not set on purpose).
   Works only with `validateContent` set to `true`. The default value is `false`
++ useTransport - enables using th2 transport protocol
 
 ## Changes
+
+### 2.1.0
+
++ th2 transport protocol support
 
 ### 1.2.1
 + Updated `bom` from 4.1.0 to 4.2.0
