@@ -82,10 +82,10 @@ repositories {
 
 dependencies {
     api platform("com.exactpro.th2:bom:4.5.0")
-    implementation ("com.exactpro.th2:common:5.4.0-dev")
+    implementation ("com.exactpro.th2:common:5.4.2-dev")
     implementation "org.slf4j:slf4j-api"
 
-    api "com.exactpro.th2:read-file-common-core:3.0.0-transport-protocol-5977408479-724fa2a-SNAPSHOT"
+    api "com.exactpro.th2:read-file-common-core:3.0.0-dev"
     implementation "com.opencsv:opencsv:5.8"
 
     implementation "javax.annotation:javax.annotation-api:1.3.2"
