@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Exactpro (Exactpro Systems Limited)
+ * Copyright 2020-2023 Exactpro (Exactpro Systems Limited)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.exactpro.th2.readcsv.cfg
 
 import com.fasterxml.jackson.module.kotlin.readValue
@@ -48,12 +49,15 @@ class TestReaderConfig {
                 "maxBatchesPerSecond": -1,
                 "disableFileMovementTracking": true
               },
-              "pullingInterval": "PT5S"
+              "pullingInterval": "PT5S",
+              "useTransport": true
             }""".trimIndent()
 
         val cfg = ReaderConfig.MAPPER.readValue<ReaderConfig>(data)
 
         Assertions.assertEquals(',', cfg.aliases["A"]?.delimiter)
         Assertions.assertEquals(';', cfg.aliases["B"]?.delimiter)
+        cfg.pullingInterval
+        Assertions.assertEquals(true, cfg.isUseTransport)
     }
 }

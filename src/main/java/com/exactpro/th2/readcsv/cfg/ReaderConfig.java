@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2020 Exactpro (Exactpro Systems Limited)
+ * Copyright 2020-2023 Exactpro (Exactpro Systems Limited)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,9 @@ public class ReaderConfig {
             + "Works only if validateContent is enabled")
     private boolean validateOnlyExtraData = false;
 
+    @JsonPropertyDescription("Enables using th2 transport protocol")
+    private boolean useTransport = false;
+
     public Path getSourceDirectory() {
         return sourceDirectory;
     }
@@ -99,5 +102,12 @@ public class ReaderConfig {
     public void setValidateOnlyExtraData(boolean validateOnlyExtraData) {
         this.validateOnlyExtraData = validateOnlyExtraData;
     }
-}
 
+    public boolean isUseTransport() {
+        return useTransport;
+    }
+
+    public void setUseTransport(boolean useTransport) {
+        this.useTransport = useTransport;
+    }
+}

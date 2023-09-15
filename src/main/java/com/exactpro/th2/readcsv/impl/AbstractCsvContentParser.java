@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 Exactpro (Exactpro Systems Limited)
+ * Copyright 2020-2023 Exactpro (Exactpro Systems Limited)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,21 +29,19 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import com.exactpro.th2.common.grpc.RawMessage;
 import com.exactpro.th2.read.file.common.ContentParser;
 import com.exactpro.th2.read.file.common.StreamId;
 import com.exactpro.th2.read.file.common.recovery.RecoverableException;
 import com.exactpro.th2.readcsv.cfg.CsvFileConfiguration;
 import com.exactpro.th2.readcsv.exception.MalformedCsvException;
-import com.google.protobuf.ByteString;
 import com.opencsv.ConfigurableCsvParser;
 import org.jetbrains.annotations.NotNull;
 
-public class CsvContentParser implements ContentParser<BufferedReader> {
+abstract class AbstractCsvContentParser<MESSAGE_BUILDER> implements ContentParser<BufferedReader, MESSAGE_BUILDER> {
     private static final byte[] NEW_LINE_BYTES = {'\n'};
     private final Map<String, CsvFileConfiguration> configurationMap;
 
-    public CsvContentParser(Map<String, CsvFileConfiguration> configurationMap) {
+    public AbstractCsvContentParser(Map<String, CsvFileConfiguration> configurationMap) {
         this.configurationMap = Objects.requireNonNull(configurationMap, "'Configuration map' parameter");
         if (configurationMap.isEmpty()) {
             throw new IllegalArgumentException("At least one alias must me specified");
@@ -56,14 +54,16 @@ public class CsvContentParser implements ContentParser<BufferedReader> {
         return !lines.isEmpty();
     }
 
+    protected abstract MESSAGE_BUILDER createMessageBuilder(byte[] body);
+
     @NotNull
     @Override
-    public Collection<RawMessage.Builder> parse(@NotNull StreamId streamId, BufferedReader bufferedReader) {
+    public Collection<MESSAGE_BUILDER> parse(@NotNull StreamId streamId, BufferedReader bufferedReader) {
         List<String> lines = tryReadRecord(getConfiguration(streamId), streamId, bufferedReader, true);
-        return List.of(RawMessage.newBuilder().setBody(joinLines(lines)));
+        return List.of(createMessageBuilder(joinLines(lines)));
     }
 
-    private ByteString joinLines(List<String> lines) {
+    private byte[] joinLines(List<String> lines) {
         Charset charset = StandardCharsets.UTF_8;
         List<byte[]> stringBytes = lines.stream()
                 .map(it -> it.getBytes(charset))
@@ -81,7 +81,7 @@ public class CsvContentParser implements ContentParser<BufferedReader> {
                 pos += NEW_LINE_BYTES.length;
             }
         }
-        return ByteString.copyFrom(bytes);
+        return bytes;
     }
 
     @NotNull
