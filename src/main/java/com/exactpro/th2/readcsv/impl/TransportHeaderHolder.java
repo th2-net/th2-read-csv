@@ -18,9 +18,11 @@ package com.exactpro.th2.readcsv.impl;
 
 import com.exactpro.th2.readcsv.cfg.CsvFileConfiguration;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 
 import java.util.Map;
+
+import static com.exactpro.th2.netty.bytebuf.util.ByteBufUtil.asExpandable;
+import static io.netty.buffer.Unpooled.wrappedBuffer;
 
 public class TransportHeaderHolder extends HeaderHolder<ByteBuf> {
     private static final byte NEW_LINE = '\n';
@@ -31,7 +33,7 @@ public class TransportHeaderHolder extends HeaderHolder<ByteBuf> {
 
     protected HeaderInfo<ByteBuf> formatHeader(String alias, CsvFileConfiguration configuration) {
         String headerString = String.join(Character.toString(configuration.getDelimiter()), configuration.getHeader()) + '\n';
-        ByteBuf content = Unpooled.wrappedBuffer(headerString.getBytes(CHARSET));
+        ByteBuf content = wrappedBuffer(headerString.getBytes(CHARSET));
         return new HeaderInfo<>(alias, configuration.getHeader().size(), content);
     }
 
@@ -42,6 +44,6 @@ public class TransportHeaderHolder extends HeaderHolder<ByteBuf> {
 
     @Override
     protected ByteBuf addNewLine(ByteBuf content) {
-        return content.writeByte(NEW_LINE);
+        return asExpandable(content).writeByte(NEW_LINE);
     }
 }
