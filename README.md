@@ -91,7 +91,7 @@ spec:
 
 ## Changes
 
-### 2.1.1
+### 2.2.0
 
 #### Fixed:
 read-csv throws the IndexOutOfBoundsException when it works in `useTransport` mode and calculates header by the first line in a CSV file
@@ -101,6 +101,10 @@ read-csv throws the IndexOutOfBoundsException when it works in `useTransport` mo
 
 #### Added:
 * netty-bytebuf-utils: `0.2.0`
+
+#### Updated:
+* common: `5.7.1-dev`
+* read-file-common-core: `3.1.0-dev`
 
 ### 2.1.0
 

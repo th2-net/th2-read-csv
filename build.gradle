@@ -82,10 +82,10 @@ repositories {
 
 dependencies {
     api platform("com.exactpro.th2:bom:4.5.0")
-    implementation ("com.exactpro.th2:common:5.4.2-dev")
+    implementation ("com.exactpro.th2:common:5.7.1-dev")
     implementation "org.slf4j:slf4j-api"
 
-    api "com.exactpro.th2:read-file-common-core:3.0.0-dev"
+    api "com.exactpro.th2:read-file-common-core:3.1.0-TH2-5131-+"
     implementation('com.exactpro.th2:netty-bytebuf-utils:0.2.0') {
         because("'asExpandable' method is used")
     }
