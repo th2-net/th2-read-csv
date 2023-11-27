@@ -105,6 +105,7 @@ read-csv throws the IndexOutOfBoundsException when it works in `useTransport` mo
 #### Updated:
 * common: `5.7.1-dev`
 * read-file-common-core: `3.1.0-dev`
+* opencsv: `5.9`
 
 ### 2.1.0
 
