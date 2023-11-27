@@ -32,7 +32,6 @@ import com.exactpro.th2.read.file.common.impl.TransportDefaultFileReader;
 import com.exactpro.th2.read.file.common.state.impl.InMemoryReaderState;
 import com.exactpro.th2.readcsv.cfg.ReaderConfig;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -44,6 +43,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static io.netty.buffer.Unpooled.wrappedBuffer;
 
 public class TransportReaderFactory extends AbstractReaderFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(TransportReaderFactory.class);
@@ -110,15 +111,15 @@ public class TransportReaderFactory extends AbstractReaderFactory {
     private static RawMessage.Builder transportValidateAndAppend(
             HeaderHolder<ByteBuf> headerHolder,
             HeaderInfo<ByteBuf> extractedHeader,
-            RawMessage.Builder it,
+            RawMessage.Builder builder,
             boolean validate,
             boolean validateOnlyExtraData
     ) {
         if (validate) {
-            headerHolder.validateContentSize(extractedHeader, it.getBody(), validateOnlyExtraData);
+            headerHolder.validateContentSize(extractedHeader, builder.getBody(), validateOnlyExtraData);
         }
 
-        return it.setBody(Unpooled.wrappedBuffer(extractedHeader.getContent(), it.getBody()));
+        return builder.setBody(wrappedBuffer(extractedHeader.getContent(), builder.getBody()));
     }
 
     @NotNull

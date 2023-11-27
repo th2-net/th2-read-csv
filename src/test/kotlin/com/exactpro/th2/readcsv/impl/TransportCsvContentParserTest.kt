@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 Exactpro (Exactpro Systems Limited)
+ * Copyright 2023 Exactpro (Exactpro Systems Limited)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 package com.exactpro.th2.readcsv.impl
 
-import com.exactpro.th2.common.grpc.RawMessage
+import com.exactpro.th2.common.schema.message.impl.rabbitmq.transport.RawMessage
 import com.exactpro.th2.read.file.common.StreamId
 import com.exactpro.th2.readcsv.cfg.CsvFileConfiguration
 import com.exactpro.th2.readcsv.exception.MalformedCsvException
@@ -24,8 +24,8 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.io.BufferedReader
 
-class TestCsvContentParser {
-    private val parser = ProtoCsvContentParser(
+class TransportCsvContentParserTest {
+    private val parser = TransportCsvContentParser(
         mapOf(
             "test" to CsvFileConfiguration(".*", ",")
         )
@@ -44,7 +44,7 @@ class TestCsvContentParser {
 
             val parsed: Collection<RawMessage.Builder> = parser.parse(streamId, it)
             assertEquals(1, parsed.size)
-            assertEquals("This,is,valid,\"multiline\nCSV file\"", parsed.first().body.toStringUtf8())
+            assertEquals("This,is,valid,\"multiline\nCSV file\"", parsed.first().body.toString(Charsets.UTF_8))
         }
     }
 
@@ -72,7 +72,7 @@ class TestCsvContentParser {
     private fun malformedCsv(): BufferedReader = readerForResource("malformed.csv")
 
     private fun readerForResource(resourceName: String): BufferedReader {
-        val resourceAsStream = TestCsvContentParser::class.java.classLoader.getResourceAsStream(resourceName)
+        val resourceAsStream = TransportCsvContentParserTest::class.java.classLoader.getResourceAsStream(resourceName)
         return requireNotNull(resourceAsStream) {
             "Unknown resource: $resourceName"
         }.bufferedReader()

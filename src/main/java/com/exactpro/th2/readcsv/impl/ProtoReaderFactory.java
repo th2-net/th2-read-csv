@@ -108,14 +108,14 @@ public class ProtoReaderFactory extends AbstractReaderFactory {
     private static RawMessage.Builder validateAndAppend(
             HeaderHolder<ByteString> headerHolder,
             HeaderInfo<ByteString> extractedHeader,
-            RawMessage.Builder it,
+            RawMessage.Builder builder,
             boolean validate,
             boolean validateOnlyExtraData
     ) {
         if (validate) {
-            headerHolder.validateContentSize(extractedHeader, it.getBody(), validateOnlyExtraData);
+            headerHolder.validateContentSize(extractedHeader, builder.getBody(), validateOnlyExtraData);
         }
-        return it.setBody(extractedHeader.getContent().concat(it.getBody()));
+        return builder.setBody(extractedHeader.getContent().concat(builder.getBody()));
     }
 
     @NotNull

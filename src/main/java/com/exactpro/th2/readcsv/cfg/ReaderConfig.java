@@ -26,12 +26,20 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.fasterxml.jackson.module.kotlin.KotlinFeature;
 import com.fasterxml.jackson.module.kotlin.KotlinModule;
 
 public class ReaderConfig {
 
     public static final ObjectMapper MAPPER = new ObjectMapper()
-            .registerModule(new KotlinModule())
+            .registerModule(new KotlinModule.Builder()
+                    .withReflectionCacheSize(512)
+                    .configure(KotlinFeature.NullToEmptyCollection, false)
+                    .configure(KotlinFeature.NullToEmptyMap, false)
+                    .configure(KotlinFeature.NullIsSameAsDefault, false)
+                    .configure(KotlinFeature.SingletonSupport, true)
+                    .configure(KotlinFeature.StrictNullChecks, false)
+                    .build())
             .registerModule(new JavaTimeModule());
 
     @JsonProperty(required = true)
@@ -53,7 +61,7 @@ public class ReaderConfig {
     private boolean validateOnlyExtraData = false;
 
     @JsonPropertyDescription("Enables using th2 transport protocol")
-    private boolean useTransport = false;
+    private boolean useTransport = true;
 
     public Path getSourceDirectory() {
         return sourceDirectory;
