@@ -58,7 +58,6 @@ test {
 }
 
 application {
-    applicationName = "service"
     mainClassName = "com.exactpro.th2.readcsv.Main"
 }
 
