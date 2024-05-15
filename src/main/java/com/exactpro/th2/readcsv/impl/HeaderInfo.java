@@ -18,14 +18,12 @@ package com.exactpro.th2.readcsv.impl;
 
 import java.util.Objects;
 
-import com.google.protobuf.ByteString;
-
-public class HeaderInfo {
+public class HeaderInfo<CONTENT_TYPE> {
     private final String alias;
     private final int size;
-    private final ByteString content;
+    private final CONTENT_TYPE content;
 
-    public HeaderInfo(String alias, int size, ByteString content) {
+    public HeaderInfo(String alias, int size, CONTENT_TYPE content) {
         this.alias = Objects.requireNonNull(alias, "'Alias' parameter");
         this.size = size;
         this.content = Objects.requireNonNull(content, "'Content' parameter");
@@ -39,7 +37,7 @@ public class HeaderInfo {
         return size;
     }
 
-    public ByteString getContent() {
+    public CONTENT_TYPE getContent() {
         return content;
     }
 }

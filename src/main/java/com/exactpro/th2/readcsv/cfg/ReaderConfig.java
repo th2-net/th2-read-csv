@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2020 Exactpro (Exactpro Systems Limited)
+ * Copyright 2020-2023 Exactpro (Exactpro Systems Limited)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,12 +26,20 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.fasterxml.jackson.module.kotlin.KotlinFeature;
 import com.fasterxml.jackson.module.kotlin.KotlinModule;
 
 public class ReaderConfig {
 
     public static final ObjectMapper MAPPER = new ObjectMapper()
-            .registerModule(new KotlinModule())
+            .registerModule(new KotlinModule.Builder()
+                    .withReflectionCacheSize(512)
+                    .configure(KotlinFeature.NullToEmptyCollection, false)
+                    .configure(KotlinFeature.NullToEmptyMap, false)
+                    .configure(KotlinFeature.NullIsSameAsDefault, false)
+                    .configure(KotlinFeature.SingletonSupport, true)
+                    .configure(KotlinFeature.StrictNullChecks, false)
+                    .build())
             .registerModule(new JavaTimeModule());
 
     @JsonProperty(required = true)
@@ -51,6 +59,9 @@ public class ReaderConfig {
     @JsonPropertyDescription("Disables reporting of errors when the content size is less than the header size. "
             + "Works only if validateContent is enabled")
     private boolean validateOnlyExtraData = false;
+
+    @JsonPropertyDescription("Enables using th2 transport protocol")
+    private boolean useTransport = true;
 
     public Path getSourceDirectory() {
         return sourceDirectory;
@@ -99,5 +110,12 @@ public class ReaderConfig {
     public void setValidateOnlyExtraData(boolean validateOnlyExtraData) {
         this.validateOnlyExtraData = validateOnlyExtraData;
     }
-}
 
+    public boolean isUseTransport() {
+        return useTransport;
+    }
+
+    public void setUseTransport(boolean useTransport) {
+        this.useTransport = useTransport;
+    }
+}
