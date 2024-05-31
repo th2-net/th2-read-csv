@@ -1,4 +1,4 @@
-# Csv Reader User Manual 2.4.0
+# Csv Reader User Manual 2.5.0
 
 ## Document Information
 
@@ -90,6 +90,11 @@ spec:
 + useTransport - enables using th2 transport protocol. The default value is `true`
 
 ## Changes
+
+### 2.5.0
+
++ Updated to th2 gradle plugin `0.0.8`
++ Updated common: `5.12.0-dev`
 
 ### 2.4.0
 
