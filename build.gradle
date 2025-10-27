@@ -50,5 +50,5 @@ application {
 }
 
 dependencyCheck {
-    suppressionFile = file('suppressions.xml')
+    setSuppressionFile("suppressions.xml")
 }
