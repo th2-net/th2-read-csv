@@ -1,4 +1,4 @@
-# Csv Reader User Manual 2.5.0
+# Csv Reader User Manual 2.6.0
 
 ## Document Information
 
@@ -91,10 +91,21 @@ spec:
 
 ## Changes
 
+### 2.6.0
+
+#### Updated:
++ kotlin: `2.2.21`
++ th2 gradle plugin: `0.3.10` (bom: `4.14.2`)
++ common: `5.16.1-dev`
++ netty-bytebuf-utils: `0.3.0`
++ read-file-common-core: `3.4.0-dev`
++ opencsv: `5.12.0`
+
 ### 2.5.0
 
-+ Updated to th2 gradle plugin `0.0.8`
-+ Updated common: `5.12.0-dev`
+#### Updated:
+  + th2 gradle plugin `0.0.8`
+  + common: `5.12.0-dev`
 
 ### 2.4.0
 

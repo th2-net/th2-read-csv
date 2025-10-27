@@ -1,46 +1,29 @@
 plugins {
-    id 'application'
-    id 'org.jetbrains.kotlin.jvm' version '1.8.22'
-    id 'com.exactpro.th2.gradle.component' version '0.0.8'
+    id "application"
+    alias(libs.plugins.th2.component)
+    alias(libs.plugins.kotlin.jvm)
 }
 
 group 'com.exactpro.th2'
 version release_version
 
-kotlin {
-    jvmToolchain(11)
-}
-
 repositories {
     mavenCentral()
-    maven {
-        name 'Sonatype_snapshots'
-        url 'https://s01.oss.sonatype.org/content/repositories/snapshots/'
-    }
-    maven {
-        name 'Sonatype_releases'
-        url 'https://s01.oss.sonatype.org/content/repositories/releases/'
-    }
     mavenLocal()
-
-    configurations.configureEach {
-        resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
-        resolutionStrategy.cacheDynamicVersionsFor 0, 'seconds'
-    }
 }
 
 dependencies {
-    implementation ("com.exactpro.th2:common:5.12.0-dev")
+    api(libs.th2.read.file.common.core)
+    implementation(libs.th2.common)
     implementation "org.slf4j:slf4j-api"
 
-    api "com.exactpro.th2:read-file-common-core:3.3.0-dev"
-    implementation('com.exactpro.th2:netty-bytebuf-utils:0.2.0') {
+    implementation(libs.th2.netty.bytebuf.utils) {
         because("'asExpandable' method is used")
     }
 
-    implementation "com.opencsv:opencsv:5.9"
+    implementation(libs.opencsv)
 
-    implementation 'jakarta.annotation:jakarta.annotation-api:3.0.0'
+    implementation(libs.jakarta.annotation.api)
     implementation "org.jetbrains.kotlin:kotlin-reflect"
 
     implementation "com.fasterxml.jackson.core:jackson-databind"
@@ -49,8 +32,13 @@ dependencies {
     }
     implementation "com.fasterxml.jackson.module:jackson-module-kotlin"
 
-    testImplementation "org.junit.jupiter:junit-jupiter:5.10.2"
-    testImplementation "org.mockito:mockito-core:5.12.0"
+    testImplementation(platform(libs.junit.bom))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testImplementation("org.junit.platform:junit-platform-launcher") {
+        because 'This artifact will not be added automatically since gradle 9.0. You can read more information here:' +
+                'https://docs.gradle.org/8.3/userguide/upgrading_version_8.html#test_framework_implementation_dependencies'
+    }
+    testImplementation(libs.mockito.core)
 }
 
 test {
