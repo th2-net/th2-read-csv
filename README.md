@@ -1,4 +1,4 @@
-# Csv Reader User Manual 2.6.0
+# Csv Reader User Manual 2.6.1
 
 ## Document Information
 
@@ -91,6 +91,13 @@ spec:
 
 ## Changes
 
+### 2.6.1
+
++ Produce multi-platform docker image
+  + migrated to [amazoncorretto:11-alpine-jdk](https://hub.docker.com/layers/library/amazoncorretto/11-alpine-jdk) docker image as base
++ Updated:
+  + read-file-common-core: `3.4.0-dev`
+
 ### 2.6.0
 
 #### Updated:
@@ -98,7 +105,6 @@ spec:
 + th2 gradle plugin: `0.3.10` (bom: `4.14.2`)
 + common: `5.16.1-dev`
 + netty-bytebuf-utils: `0.3.0`
-+ read-file-common-core: `3.4.0-dev`
 + opencsv: `5.12.0`
 
 ### 2.5.0
