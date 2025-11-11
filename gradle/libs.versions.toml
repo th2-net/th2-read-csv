@@ -11,7 +11,7 @@ opencsv = { group = "com.opencsv", name = "opencsv", version = "5.12.0" }
 
 jakarta-annotation-api = { group = "jakarta.annotation", name = "jakarta.annotation-api", version = "3.0.0" }
 
-junit-bom = { group = "org.junit", name = "junit-bom", version = "5.14.0" }
+junit-bom = { group = "org.junit", name = "junit-bom", version = "5.14.1" }
 mockito-core = { group = "org.mockito", name = "mockito-core", version = "5.20.0" }
 
 [plugins]
