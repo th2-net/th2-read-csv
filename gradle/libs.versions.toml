@@ -3,7 +3,7 @@ kotlin = "2.2.21"
 
 [libraries]
 
-th2-common = { group = "com.exactpro.th2", name = "common", version = "5.16.1-dev" }
+th2-common = { group = "com.exactpro.th2", name = "common", version = "5.17.0-dev" }
 th2-netty-bytebuf-utils = { group = "com.exactpro.th2", name = "netty-bytebuf-utils", version = "0.3.0" }
 th2-read-file-common-core = { group = "com.exactpro.th2", name = "read-file-common-core", version = "3.4.0-dev" }
 
