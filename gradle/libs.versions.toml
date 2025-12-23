@@ -15,5 +15,5 @@ junit-bom = { group = "org.junit", name = "junit-bom", version = "5.14.1" }
 mockito-core = { group = "org.mockito", name = "mockito-core", version = "5.21.0" }
 
 [plugins]
-th2-component = { id = "com.exactpro.th2.gradle.component", version = "0.3.10" }
+th2-component = { id = "com.exactpro.th2.gradle.component", version = "0.3.11" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
